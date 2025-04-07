@@ -20,7 +20,7 @@ MENU_CATEGORY_CHOICES = [
 ]
 
 class Order(models.Model):
-    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    user = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
     order_status = models.CharField(max_length=100, choices=ORDER_STATUS_CHOICES, default='pending')
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     c_at = models.DateTimeField(auto_now_add=True)
@@ -66,7 +66,7 @@ class OrderItem(models.Model):
     
 
 class Reservations(models.Model):
-    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    user = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
     reservation_time = models.DateTimeField()
     amount_of_customers = models.PositiveIntegerField()
     status = models.CharField(max_length=100, choices=ORDER_STATUS_CHOICES, default='pending')

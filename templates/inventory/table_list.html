@@ -1,0 +1,20 @@
+<!-- templates/inventory/table_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Table List{% endblock %}
+
+{% block content %}
+    <h1>Table List</h1>
+    <a href="{% url 'inventory:table_create' %}">Create New Table</a>
+    <ul>
+        {% for table in tables %}
+            <li>
+                <a href="{% url 'inventory:table_detail' table.pk %}">Table {{ table.table_number }}</a> - Capacity: {{ table.capacity }}
+                <a href="{% url 'inventory:table_update' table.pk %}">Edit</a>
+                <a href="{% url 'inventory:table_delete' table.pk %}">Delete</a>
+            </li>
+        {% empty %}
+            <li>No tables yet.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

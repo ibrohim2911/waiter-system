@@ -1,0 +1,15 @@
+<!-- templates/order/reservations_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}Reservation Detail{% endblock %}
+
+{% block content %}
+    <h1>Reservation Detail</h1>
+    <p>User: {{ reservation.user.username }}</p>
+    <p>Time: {{ reservation.reservation_time }}</p>
+    <p>Customers: {{ reservation.amount_of_customers }}</p>
+    <p>Status: {{ reservation.status }}</p>
+    <p>Table: {{ reservation.table}}</p>
+    <a href="{% url 'order:reservations_update' reservation.pk %}">Edit</a>
+    <a href="{% url 'order:reservations_delete' reservation.pk %}">Delete</a>
+{% endblock %}

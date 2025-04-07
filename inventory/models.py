@@ -39,7 +39,7 @@ class Inventory(models.Model):
 
 class InventoryUsage(models.Model):
     inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
-    order_item = models.ForeignKey('order.OrderItem', on_delete=models.CASCADE)
+    order_item = models.ForeignKey('order.OrderItem', on_delete=models.SET_NULL, null=True)
     used_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     c_at = models.DateTimeField(auto_now_add=True)
     u_at = models.DateTimeField(auto_now=True)
@@ -60,8 +60,8 @@ class Table(models.Model):
     is_available = models.BooleanField(default=True)
 
 class MenuItemIngredient(models.Model):
-    menu_item = models.ForeignKey('order.MenuItem', on_delete=models.CASCADE, related_name='ingredients')
-    inventory = models.ForeignKey(Inventory, on_delete=models.PROTECT)
+    menu_item = models.ForeignKey('order.MenuItem', on_delete=models.SET_NULL, null=True, related_name='ingredients')
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     
     def __str__(self):

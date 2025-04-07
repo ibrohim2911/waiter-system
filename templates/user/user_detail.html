@@ -1,0 +1,13 @@
+<!-- templates/user/user_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}User Detail{% endblock %}
+
+{% block content %}
+    <h1>User Detail</h1>
+    <p>Username: {{ user.username }}</p>
+    <p>Email: {{ user.email }}</p>
+    <!-- Add other user details as needed -->
+    <a href="{% url 'user:user_update' user.pk %}">Edit</a>
+    <a href="{% url 'user:user_delete' user.pk %}">Delete</a>
+{% endblock %}

@@ -1,0 +1,75 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Waiter System{% endblock %}</title>
+    <!-- Add your CSS links here -->
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 20px;
+        }
+        .messages {
+            margin-bottom: 20px;
+        }
+        .messages .success {
+            color: green;
+        }
+        .messages .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            {% if user.is_authenticated %}
+            <li><a href="{% url 'order:order_list' %}">Orders</a></li>
+            <li><a href="{% url 'inventory:inventory_list' %}">Inventories</a></li>
+            <li><a href="{% url 'inventory:table_list' %}">Tables</a></li>
+            <li><a href="{% url 'user:user_list' %}">Users</a></li>
+            <li><a href="{% url 'user:logout' %}">Logout</a></li>
+            {% else %}
+            <li><a href="{% url 'user:login' %}">Login</a></li>
+            <li><a href="{% url 'user:register' %}">Register</a></li>
+            {% endif %}
+        </ul>
+        <ul>
+            {% if user.is_authenticated %}
+                {% if user.has_module_perms('user') %}
+                    <li><a href="{% url 'user:user_list' %}">Users</a></li>
+                {% endif %}
+                {% if user.has_module_perms('order') %}
+                    <li><a href="{% url 'order:order_list' %}">Orders</a></li>
+                {% endif %}
+                <!-- Other links -->
+            {% endif %}
+        </ul>
+    </nav>
+
+    <div class="messages">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+    <!-- Add your JS links here -->
+</body>
+</html>

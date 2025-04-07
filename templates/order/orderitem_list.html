@@ -1,0 +1,20 @@
+<!-- templates/order/orderitem_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Order Item List{% endblock %}
+
+{% block content %}
+    <h1>Order Item List</h1>
+    <a href="{% url 'order:orderitem_create' %}">Create New Order Item</a>
+    <ul>
+        {% for item in order_items %}
+            <li>
+                <a href="{% url 'order:orderitem_detail' item.pk %}">{{ item.menu_item.name }}</a> - Quantity: {{ item.quantity }}
+                <a href="{% url 'order:orderitem_update' item.pk %}">Edit</a>
+                <a href="{% url 'order:orderitem_delete' item.pk %}">Delete</a>
+            </li>
+        {% empty %}
+            <li>No order items yet.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

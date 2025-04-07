@@ -28,6 +28,9 @@ class UserCreationForm(forms.ModelForm):
             user.save()
         return user
 
+class LoginForm(forms.Form):
+    phone_number = forms.CharField(max_length=20)
+    password = forms.CharField(widget=forms.PasswordInput)
 
 class UserEditForm(forms.ModelForm):
     class Meta:
