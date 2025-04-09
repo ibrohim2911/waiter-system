@@ -39,17 +39,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'user',
     'order',
-    'inventory'
+    'inventory',
+
+    'rest_framework'# Consider adding 'corsheaders' for React frontend interaction
+    # 'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # Add corsheaders middleware if using it (usually high up)
+    # 'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -57,7 +63,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR + '/templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -90,13 +96,25 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     
 ]
-# ... other settings ...
-
 AUTH_USER_MODEL = 'user.User'
 
-# ... other settings ...
-
-
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # SessionAuthentication works well with Browsable API and web contexts
+        'rest_framework.authentication.SessionAuthentication',
+        # Consider adding TokenAuthentication (e.g., SimpleJWT) for SPAs like React
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        # Start with requiring authentication for most actions
+        'rest_framework.permissions.IsAuthenticated',
+        # Or IsAuthenticatedOrReadOnly if some GET requests should be public
+        # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    # Optional: Add pagination, filtering, etc.
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # 'PAGE_SIZE': 10
+}
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -110,8 +128,18 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+# Add STATIC_ROOT for collectstatic in production
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# --- CORS Headers Settings (Uncomment and configure if needed for React) ---
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000", # Your React frontend address
+#     "http://127.0.0.1:3000",
+# ]
+# Or allow all for development (less secure):
+# CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_CREDENTIALS = True # If you need cookies/sessions sent across domains

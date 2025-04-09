@@ -1,137 +1,77 @@
-from django.shortcuts import render
-from django.urls import reverse_lazy
-from django.views.generic import ListView,DetailView,CreateView,UpdateView,DeleteView
+# order/views.py
+from rest_framework import viewsets, permissions
 from .models import Order, MenuItem, OrderItem, Reservations
-from django.contrib.auth.mixins import LoginRequiredMixin
+from .serializers import (
+    OrderSerializer,
+    MenuItemSerializer,
+    OrderItemSerializer,
+    ReservationsSerializer
+)
+# Optional: Import PermissionDenied for custom checks
+# from rest_framework.exceptions import PermissionDenied
 
-# Order Views
-class OrderListView(LoginRequiredMixin, ListView):
-    model = Order
-    template_name = "order/order_list.html"
-    context_object_name = "orders"
+class OrderViewSet(viewsets.ModelViewSet):
+    """ API endpoint for Orders """
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        """ Filter orders for the current user unless they are staff. """
+        user = self.request.user
+        if user.is_staff:
+            queryset = Order.objects.all()
+        else:
+            queryset = Order.objects.filter(user=user)
+        # Allow filtering by status via query param e.g., /api/v1/orders/?status=pending
+        status = self.request.query_params.get('status')
+        if status is not None:
+            queryset = queryset.filter(order_status=status)
+        return queryset.order_by('-c_at')
 
-class OrderDetailView(LoginRequiredMixin, DetailView):
-    model = Order
-    template_name = "order/order_detail.html"
-    context_object_name = "order"
+    def perform_create(self, serializer):
+        """ Associate the order with the logged-in user. """
+        serializer.save(user=self.request.user)
 
+class MenuItemViewSet(viewsets.ModelViewSet):
+    """ API endpoint for Menu Items """
+    queryset = MenuItem.objects.all().order_by('category', 'name')
+    serializer_class = MenuItemSerializer
+    # Permissions: Example - Only admins can modify menu items
+    permission_classes = [permissions.IsAdminUser]
 
-class OrderCreateView(LoginRequiredMixin, CreateView):
-    model = Order
-    fields = ["user", "order_status", "table"]  # Specify the fields to include in the form
-    template_name = "order/order_form.html"
-    success_url = reverse_lazy("order:order_list")
+class OrderItemViewSet(viewsets.ModelViewSet):
+    """ API endpoint for Order Items """
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        """ Filter order items based on the user who owns the parent order. """
+        user = self.request.user
+        if user.is_staff:
+            return OrderItem.objects.all()
+        return OrderItem.objects.filter(order__user=user)
 
-class OrderUpdateView(LoginRequiredMixin, UpdateView):
-    model = Order
-    fields = ["order_status", "table"]  # Specify the fields to include in the form
-    template_name = "order/order_form.html"
-    success_url = reverse_lazy("order:order_list")
+    # Optional: Add validation in perform_create/perform_update
+    # def perform_create(self, serializer):
+    #     order = serializer.validated_data['order']
+    #     if not self.request.user.is_staff and order.user != self.request.user:
+    #         raise PermissionDenied("Cannot add items to another user's order.")
+    #     super().perform_create(serializer)
 
+class ReservationsViewSet(viewsets.ModelViewSet):
+    """ API endpoint for Reservations """
+    queryset = Reservations.objects.all().order_by('-reservation_time')
+    serializer_class = ReservationsSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-class OrderDeleteView(LoginRequiredMixin, DeleteView):
-    model = Order
-    template_name = "order/order_delete.html"
-    success_url = reverse_lazy("order:order_list")
+    def get_queryset(self):
+        """ Filter reservations for the current user unless they are staff. """
+        user = self.request.user
+        if user.is_staff:
+            return Reservations.objects.all().order_by('-reservation_time')
+        return Reservations.objects.filter(user=user).order_by('-reservation_time')
 
-
-# MenuItem Views
-class MenuItemListView(LoginRequiredMixin, ListView):
-    model = MenuItem
-    template_name = "order/menuitem_list.html"
-    context_object_name = "menu_items"
-
-
-class MenuItemDetailView(LoginRequiredMixin, DetailView):
-    model = MenuItem
-    template_name = "order/menuitem_detail.html"
-    context_object_name = "menu_item"
-
-
-class MenuItemCreateView(LoginRequiredMixin, CreateView):
-    model = MenuItem
-    fields = ["name", "description", "price", "category", "is_available"]
-    template_name = "order/menuitem_form.html"
-    success_url = reverse_lazy("order:menuitem_list")
-
-
-class MenuItemUpdateView(LoginRequiredMixin, UpdateView):
-    model = MenuItem
-    fields = ["name", "description", "price", "category", "is_available"]
-    template_name = "order/menuitem_form.html"
-    success_url = reverse_lazy("order:menuitem_list")
-
-
-class MenuItemDeleteView(LoginRequiredMixin, DeleteView):
-    model = MenuItem
-    template_name = "order/menuitem_confirm_delete.html"
-    success_url = reverse_lazy("order:menuitem_list")
-
-
-# OrderItem Views
-class OrderItemListView(LoginRequiredMixin, ListView):
-    model = OrderItem
-    template_name = "order/orderitem_list.html"
-    context_object_name = "order_items"
-
-
-class OrderItemDetailView(LoginRequiredMixin, DetailView):
-    model = OrderItem
-    template_name = "order/orderitem_detail.html"
-    context_object_name = "order_item"
-
-
-class OrderItemCreateView(LoginRequiredMixin, CreateView):
-    model = OrderItem
-    fields = ["order", "menu_item", "quantity"]
-    template_name = "order/orderitem_form.html"
-    success_url = reverse_lazy("order:orderitem_list")
-
-
-class OrderItemUpdateView(LoginRequiredMixin, UpdateView):
-    model = OrderItem
-    fields = ["order", "menu_item", "quantity"]
-    template_name = "order/orderitem_form.html"
-    success_url = reverse_lazy("order:orderitem_list")
-
-
-class OrderItemDeleteView(LoginRequiredMixin, DeleteView):
-    model = OrderItem
-    template_name = "order/orderitem_confirm_delete.html"
-    success_url = reverse_lazy("order:orderitem_list")
-
-
-# Reservations Views
-class ReservationsListView(LoginRequiredMixin, ListView):
-    model = Reservations
-    template_name = "order/reservations_list.html"
-    context_object_name = "reservations"
-
-
-class ReservationsDetailView(LoginRequiredMixin, DetailView):
-    model = Reservations
-    template_name = "order/reservations_detail.html"
-    context_object_name = "reservation"
-
-
-class ReservationsCreateView(LoginRequiredMixin, CreateView):
-    model = Reservations
-    fields = ["user", "reservation_time", "amount_of_customers", "status", "table"]
-    template_name = "order/reservations_form.html"
-    success_url = reverse_lazy("order:reservations_list")
-
-
-class ReservationsUpdateView(LoginRequiredMixin, UpdateView):
-    model = Reservations
-    fields = ["reservation_time", "amount_of_customers", "status", "table"]
-    template_name = "order/reservations_form.html"
-    success_url = reverse_lazy("order:reservations_list")
-
-
-class ReservationsDeleteView(LoginRequiredMixin, DeleteView):
-    model = Reservations
-    template_name = "order/reservations_confirm_delete.html"
-    success_url = reverse_lazy("order:reservations_list")
-
+    def perform_create(self, serializer):
+        """ Associate the reservation with the logged-in user. """
+        serializer.save(user=self.request.user)

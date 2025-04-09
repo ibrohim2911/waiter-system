@@ -1,38 +1,37 @@
+# c:\Users\User\Desktop\waiter-system\user\forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm as DjangoUserCreationForm  # For reference
-from django.contrib.auth.forms import UserChangeForm as DjangoUserChangeForm    #For reference
-from .models import User
-from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
+# REMOVE AuthenticationForm imports
+# from django.contrib.auth.forms import AuthenticationForm as BaseAuthenticationForm
+# from django.forms import CharField
 
-class UserCreationForm(forms.ModelForm):
-    password2 = forms.CharField(label="Confirm Password", widget=forms.PasswordInput)
+User = get_user_model()
 
-    class Meta:
+# Keep UserCreationForm - might be useful for admin or custom API endpoint
+class UserCreationForm(BaseUserCreationForm):
+    confirm_password = forms.CharField(widget=forms.PasswordInput)
+    role = forms.ChoiceField(choices=User.ROLE_CHOICES, required=True)
+
+    class Meta(BaseUserCreationForm.Meta):
         model = User
-        fields = ('name', 'phone_number', 'email', 'password', 'password2', 'role')
+        fields = ('phone_number', 'name', 'email', 'role')
 
     def clean(self):
+        """Check that the two password entries match."""
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
-        password2 = cleaned_data.get("password2")
+        confirm_password = cleaned_data.get("confirm_password")
 
-        if password and password2 and password != password2:
-            raise ValidationError("Passwords do not match")
+        if password and confirm_password and password != confirm_password:
+            self.add_error(None, "Passwords do not match")
 
         return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data["password"])
+        if 'role' in self.cleaned_data:
+             user.role = self.cleaned_data['role']
         if commit:
             user.save()
         return user
-
-class LoginForm(forms.Form):
-    phone_number = forms.CharField(max_length=20)
-    password = forms.CharField(widget=forms.PasswordInput)
-
-class UserEditForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ('name', 'phone_number', 'email', 'role')
