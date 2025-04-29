@@ -5,8 +5,8 @@ name = "pypi"
 
 [packages]
 django = "==3.0"  # Be more specific if you know the exact minor version, e.g., 3.0.14
-# OR keep django = "==3" if you want any 3.x version
 djangorestframework = "~=3.14.0" # Use DRF 3.14.x
+django-cors-headers = "*"
 
 [dev-packages]
 

@@ -41,15 +41,15 @@ INSTALLED_APPS = [
     'order',
     'inventory',
 
-    'rest_framework'# Consider adding 'corsheaders' for React frontend interaction
-    # 'corsheaders',
+    'rest_framework',# Consider adding 'corsheaders' for React frontend interaction
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Add corsheaders middleware if using it (usually high up)
-    # 'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -134,12 +134,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 # Add STATIC_ROOT for collectstatic in production
 # STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# --- CORS Headers Settings (Uncomment and configure if needed for React) ---
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000", # Your React frontend address
-#     "http://127.0.0.1:3000",
-# ]
-# Or allow all for development (less secure):
-# CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOW_CREDENTIALS = True # If you need cookies/sessions sent across domains
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Default for Create React App
+    "http://127.0.0.1:3000", # Sometimes needed depending on how you access it
+    # Add other origins if needed (e.g., Vite default: "http://localhost:5173")
+]
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True # If you need cookies/sessions sent across domains

@@ -49,7 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
         ('waiter', 'Waiter'),
-        ('kitchen', 'Kitchen Staff'), # Assuming kitchen role exists
+        ('accountant', 'Accountant'), # Assuming kitchen role exists
         ('customer', 'Customer'),
         # ('superadmin', 'Superadmin'), # Remove if 'admin' with is_superuser=True covers this
         # ('accauntant', 'Accauntant'), # Correct spelling to 'accountant' if used
