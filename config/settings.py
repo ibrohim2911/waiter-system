@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
+from datetime import timedelta
 
 import os
 
@@ -41,7 +42,8 @@ INSTALLED_APPS = [
     'order',
     'inventory',
 
-    'rest_framework',# Consider adding 'corsheaders' for React frontend interaction
+    'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
 ]
 
@@ -88,7 +90,11 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
+AUTHENTICATION_BACKENDS = [
+    'user.backends.PinOnlyAuthBackend',      # Tries PIN login first
+    'user.backends.PhonePasswordAuthBackend', # Falls back to phone/password
+    # 'django.contrib.auth.backends.ModelBackend', # Remove the default one now
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -100,10 +106,8 @@ AUTH_USER_MODEL = 'user.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # SessionAuthentication works well with Browsable API and web contexts
         'rest_framework.authentication.SessionAuthentication',
-        # Consider adding TokenAuthentication (e.g., SimpleJWT) for SPAs like React
-        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication', # Use JWT
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         # Start with requiring authentication for most actions
@@ -114,6 +118,12 @@ REST_FRAMEWORK = {
     # Optional: Add pagination, filtering, etc.
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
+}
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/

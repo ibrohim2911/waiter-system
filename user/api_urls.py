@@ -8,4 +8,6 @@ router.register(r'users', views.UserViewSet, basename='user')
 
 urlpatterns = [
     path('', include(router.urls)),
+    # New endpoint
+    path('pin-login/', views.PinLoginAPIView.as_view(), name='pin-login'),
 ]
