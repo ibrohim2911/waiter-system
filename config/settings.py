@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
+from datetime import timedelta
 
 import os
 
@@ -40,16 +41,17 @@ INSTALLED_APPS = [
     'user',
     'order',
     'inventory',
-
-    'rest_framework',# Consider adding 'corsheaders' for React frontend interaction
+    'log',
     'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Add corsheaders middleware if using it (usually high up)
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -88,7 +90,11 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
+AUTHENTICATION_BACKENDS = [
+    'user.backends.PinOnlyAuthBackend',      # Tries PIN login first
+    'user.backends.PhonePasswordAuthBackend', # Falls back to phone/password
+    # 'django.contrib.auth.backends.ModelBackend', # Remove the default one now
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -97,13 +103,14 @@ AUTH_PASSWORD_VALIDATORS = [
     
 ]
 AUTH_USER_MODEL = 'user.User'
-
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # SessionAuthentication works well with Browsable API and web contexts
         'rest_framework.authentication.SessionAuthentication',
-        # Consider adding TokenAuthentication (e.g., SimpleJWT) for SPAs like React
-        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication', # Use JWT
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         # Start with requiring authentication for most actions
@@ -114,6 +121,12 @@ REST_FRAMEWORK = {
     # Optional: Add pagination, filtering, etc.
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
+}
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
@@ -139,5 +152,5 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000", # Sometimes needed depending on how you access it
     # Add other origins if needed (e.g., Vite default: "http://localhost:5173")
 ]
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True # If you need cookies/sessions sent across domains
+# CORS_ALLOW_ALL_ORIGINS = True

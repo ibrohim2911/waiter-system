@@ -177,56 +177,56 @@ def _increase_inventory(order_item):
 
 
 
-@receiver(post_save, sender=OrderItem)
-def order_item_post_save_inventory_management(sender, instance, created, **kwargs):
-    """Manages inventory reduction/adjustment when an OrderItem is saved."""
-    if not instance.menu_item: return # Cannot manage inventory without a menu item
+# @receiver(post_save, sender=OrderItem)
+# def order_item_post_save_inventory_management(sender, instance, created, **kwargs):
+#     """Manages inventory reduction/adjustment when an OrderItem is saved."""
+#     if not instance.menu_item: return # Cannot manage inventory without a menu item
 
-    if created:
-        # Reduce inventory and create usage record on creation
-        _reduce_inventory(instance)
-    else:
-        # --- Refactored Update Logic ---
-        for ingredient_link in instance.menu_item.ingredients.all().select_related('inventory'):
-            try:
-                inventory_item = ingredient_link.inventory
-                required_ingredient_qty_per_menu_item = ingredient_link.quantity
-                # Ensure calculations use Decimal
-                new_total_required_qty = decimal.Decimal(str(instance.quantity)) * required_ingredient_qty_per_menu_item
+#     if created:
+#         # Reduce inventory and create usage record on creation
+#         _reduce_inventory(instance)
+#     else:
+#         # --- Refactored Update Logic ---
+#         for ingredient_link in instance.menu_item.ingredients.all().select_related('inventory'):
+#             try:
+#                 inventory_item = ingredient_link.inventory
+#                 required_ingredient_qty_per_menu_item = ingredient_link.quantity
+#                 # Ensure calculations use Decimal
+#                 new_total_required_qty = decimal.Decimal(str(instance.quantity)) * required_ingredient_qty_per_menu_item
 
-                # Get the existing usage record or initialize if not found
-                usage_record, usage_created = InventoryUsage.objects.get_or_create(
-                    inventory=inventory_item,
-                    order_item=instance,
-                    defaults={'used_quantity': decimal.Decimal('0.00')} # Default to 0 if just created
-                )
+#                 # Get the existing usage record or initialize if not found
+#                 usage_record, usage_created = InventoryUsage.objects.get_or_create(
+#                     inventory=inventory_item,
+#                     order_item=instance,
+#                     defaults={'used_quantity': decimal.Decimal('0.00')} # Default to 0 if just created
+#                 )
 
-                # Calculate the difference between new requirement and what was used before
-                adjustment_qty = new_total_required_qty - usage_record.used_quantity
+#                 # Calculate the difference between new requirement and what was used before
+#                 adjustment_qty = new_total_required_qty - usage_record.used_quantity
 
-                if adjustment_qty != 0: # Only adjust if there's a change
-                    if adjustment_qty > 0: # Need to use more inventory
-                        inventory_item.reduce_quantity(adjustment_qty)
-                    elif adjustment_qty < 0: # Need to restore inventory
-                        inventory_item.increase_quantity(abs(adjustment_qty))
+#                 if adjustment_qty != 0: # Only adjust if there's a change
+#                     if adjustment_qty > 0: # Need to use more inventory
+#                         inventory_item.reduce_quantity(adjustment_qty)
+#                     elif adjustment_qty < 0: # Need to restore inventory
+#                         inventory_item.increase_quantity(abs(adjustment_qty))
 
-                    # Update the usage record to reflect the new total requirement
-                    if new_total_required_qty <= 0 and not usage_created:
-                        usage_record.delete() # Remove usage if quantity becomes zero or less
-                    elif new_total_required_qty > 0 :
-                         usage_record.used_quantity = new_total_required_qty
-                         usage_record.save(update_fields=['used_quantity'])
+#                     # Update the usage record to reflect the new total requirement
+#                     if new_total_required_qty <= 0 and not usage_created:
+#                         usage_record.delete() # Remove usage if quantity becomes zero or less
+#                     elif new_total_required_qty > 0 :
+#                          usage_record.used_quantity = new_total_required_qty
+#                          usage_record.save(update_fields=['used_quantity'])
 
-            except Inventory.DoesNotExist:
-                 print(f"Warning: Inventory item not found for ingredient link {ingredient_link.pk} during update.")
-            except ValidationError as e:
-                 # Re-raise validation errors (e.g., insufficient stock during adjustment)
-                 raise ValidationError(f"Failed adjusting OrderItem {instance.pk}: {e}")
-            except Exception as e:
-                 print(f"Error adjusting inventory for OrderItem {instance.pk}: {e}")
-        # --- End Refactored Update Logic ---
+#             except Inventory.DoesNotExist:
+#                  print(f"Warning: Inventory item not found for ingredient link {ingredient_link.pk} during update.")
+#             except ValidationError as e:
+#                  # Re-raise validation errors (e.g., insufficient stock during adjustment)
+#                  raise ValidationError(f"Failed adjusting OrderItem {instance.pk}: {e}")
+#             except Exception as e:
+#                  print(f"Error adjusting inventory for OrderItem {instance.pk}: {e}")
+#         # --- End Refactored Update Logic ---
 
-    # Note: Order total calculation is handled by OrderItem.save override
+#     # Note: Order total calculation is handled by OrderItem.save override
 
 
 # Ensure this uses post_delete
@@ -316,3 +316,25 @@ def order_post_save_update_table_availability(sender, instance, created, **kwarg
         except Exception as e:
             print(f"Error in order_post_save_update_table_availability signal for Order {instance.pk}: {e}")
 
+# @receiver(post_save, sender=OrderItem)
+def create_inventory_usage(sender, instance, created, **kwargs):
+    if not created:
+        return  # Only handle creation for simplicity
+
+    menu_item = instance.menu_item
+    order_item_quantity = instance.quantity
+
+    # For each ingredient needed for this menu item
+    for ingredient in menu_item.ingredients.all():
+        inventory = ingredient.inventory
+        used_quantity = ingredient.quantity * decimal.Decimal(order_item_quantity)
+
+        # Reduce inventory
+        inventory.reduce_quantity(used_quantity)
+
+        # Log usage
+        InventoryUsage.objects.create(
+            inventory=inventory,
+            order_item=instance,
+            used_quantity=used_quantity
+        )

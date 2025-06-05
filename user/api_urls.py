@@ -8,4 +8,9 @@ router.register(r'users', views.UserViewSet, basename='user')
 
 urlpatterns = [
     path('', include(router.urls)),
+    # New endpoint
+    path('pin-login/', views.PinLoginAPIView.as_view(), name='pin-login'),
+    path('phone-login/', views.PhonePasswordLoginAPIView.as_view(), name='phone-login'),
+    path('phone-jwt-login/', views.PhonePasswordJWTLoginAPIView.as_view(), name='phone-jwt-login'),
+
 ]
