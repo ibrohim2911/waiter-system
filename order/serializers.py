@@ -1,7 +1,8 @@
 # order/serializers.py
+from django.db import transaction
 from rest_framework import serializers
 # Import all relevant models from this app
-from .models import Order, OrderItem, MenuItem, Reservations
+from .models import Order, OrderItem, MenuItem, Reservations, InventoryUsage
 # Import serializers from other apps
 from inventory.serializers import (
     TableSerializer,
@@ -39,22 +40,49 @@ class MenuItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['is_available', 'c_at', 'u_at']
 
 
-# --- OrderItem Serializer ---
 class OrderItemSerializer(serializers.ModelSerializer):
-    # Read-only fields derived from the related menu_item
     item_name = serializers.CharField(source='menu_item.name', read_only=True)
     item_price = serializers.DecimalField(source='menu_item.price', read_only=True, max_digits=10, decimal_places=2)
-
+    print('OrderItemSerializer: item_name:', item_name)
     class Meta:
         model = OrderItem
-        # 'order' FK is needed to link item to an order during creation
-        # 'menu_item' FK is needed to specify the item
-        # 'quantity' is needed
         fields = ['id', 'order', 'menu_item', 'item_name', 'item_price', 'quantity']
-        # No specific read_only fields needed here beyond derived ones
+        print('OrderItemSerializer: fields:', fields)
+    def validate(self, data):
+        print('OrderItemSerializer: validate:', data)
+        menu_item = data['menu_item']
+        quantity = data['quantity']
+        for ingredient in menu_item.ingredients.all():
+            inventory = ingredient.inventory
+            required = ingredient.quantity * quantity
+            if inventory.quantity < required:
+                raise serializers.ValidationError(
+                    f"Not enough {inventory.name} in inventory for {menu_item.name} (needed: {required}, available: {inventory.quantity})"
+                )
+        return data
 
+    def create(self, validated_data):
+        with transaction.atomic():
+            menu_item = validated_data['menu_item']
+            quantity = validated_data['quantity']
+            order_item = OrderItem.objects.create(**validated_data)
+            print(f"OrderItem created: {order_item.id} for menu item {menu_item.name} with quantity {quantity}")
+            for ingredient in menu_item.ingredients.all():
+                inventory = ingredient.inventory
+                used_quantity = ingredient.quantity * quantity
+                print(f"Inventory before reduction: {inventory.quantity}")
+                # Reduce inventory
+                inventory.quantity -= used_quantity
+                inventory.save(update_fields=['quantity'])
+                print(f"Inventory after reduction: {inventory.quantity}")
 
-# --- Order Serializer ---
+                # Log usage
+                InventoryUsage.objects.create(
+                    inventory=inventory,
+                    order_item=order_item,
+                    used_quantity=used_quantity
+                )
+            return order_item
 class OrderSerializer(serializers.ModelSerializer):
     # Keep items read-only here; manage OrderItems via OrderItemViewSet
     items = OrderItemSerializer(many=True, read_only=True, source='order_items')

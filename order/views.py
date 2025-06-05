@@ -37,8 +37,7 @@ class MenuItemViewSet(viewsets.ModelViewSet):
     queryset = MenuItem.objects.all().order_by('category', 'name')
     serializer_class = MenuItemSerializer
     # Permissions: Example - Only admins can modify menu items
-    permission_classes = [permissions.IsAdminUser]
-
+    permission_classes = [permissions.IsAuthenticated]
 class OrderItemViewSet(viewsets.ModelViewSet):
     """ API endpoint for Order Items """
     queryset = OrderItem.objects.all()
@@ -52,6 +51,37 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             return OrderItem.objects.all()
         return OrderItem.objects.filter(order__user=user)
 
+    def create(self, request, *args, **kwargs):
+        is_many = isinstance(request.data, list)
+        serializer = self.get_serializer(data=request.data, many=is_many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        # Get the order ID(s) from the created items
+        order_ids = set()
+        if is_many:
+            for item in serializer.data:
+                order_ids.add(item['order'])
+        else:
+            order_ids.add(serializer.data['order'])
+        # Generate a kitchen ticket for each order involved
+        for order_id in order_ids:
+            generate_kitchen_ticket(order_id)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+# Place this helper function somewhere in the file (or import from utils)
+def generate_kitchen_ticket(order_id):
+    from .models import Order  # Import here to avoid circular import
+    order = Order.objects.get(id=order_id)
+    items = order.orderitem.all()
+    ticket = f"\n--- KITCHEN TICKET ---\nTable: {getattr(order, 'table', 'N/A')}\nOrder: {order.id}\n"
+    for item in items:
+        ticket += f"{item.menu_item.name} x {item.quantity}\n"
+    ticket += "----------------------\n"
+    print(ticket)  # Replace with actual print/send logic
     # Optional: Add validation in perform_create/perform_update
     # def perform_create(self, serializer):
     #     order = serializer.validated_data['order']

@@ -20,7 +20,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Inventory.objects.all().order_by('name')
     serializer_class = InventorySerializer
     # Permissions: Example - Only admin users can manage inventory
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
 
 class InventoryUsageViewSet(viewsets.ReadOnlyModelViewSet):
     """ API endpoint for viewing inventory usage (read-only) """
