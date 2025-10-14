@@ -1,5 +1,6 @@
 # inventory/views.py
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, pagination
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Inventory, Table, InventoryUsage, MenuItemIngredient
 from .serializers import (
     InventorySerializer,
@@ -7,20 +8,21 @@ from .serializers import (
     InventoryUsageSerializer,
     MenuItemIngredientSerializer
 )
-
 class TableViewSet(viewsets.ModelViewSet):
-    """ API endpoint for Tables """
+    """API endpoint for Tables"""
     queryset = Table.objects.all().order_by('name')
     serializer_class = TableSerializer
-    # Permissions: Example - Any authenticated user can manage tables
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = pagination.PageNumberPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['location']
 
 class InventoryViewSet(viewsets.ModelViewSet):
     """ API endpoint for Inventory items """
     queryset = Inventory.objects.all().order_by('name')
     serializer_class = InventorySerializer
     # Permissions: Example - Only admin users can manage inventory
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
 class InventoryUsageViewSet(viewsets.ReadOnlyModelViewSet):
     """ API endpoint for viewing inventory usage (read-only) """

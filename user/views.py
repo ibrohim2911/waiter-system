@@ -3,6 +3,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import authenticate, login
 from .models import User
 from .serializers import UserSerializer, PinLoginSerializer
@@ -19,6 +20,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
     # Only admins can view user list/details via API
     permission_classes = [permissions.IsAdminUser]
+    
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PinLoginAPIView(APIView):
@@ -41,6 +43,9 @@ class PinLoginAPIView(APIView):
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
+                'user_id': user.id,
+                'user_name': user.name,
+                'role': user.role,
             }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid PIN'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -68,6 +73,7 @@ class PhonePasswordJWTLoginAPIView(APIView):
                 'access': str(refresh.access_token),
                 'user_id': user.id,
                 'user_name': user.name,
+                'role': user.role,
             }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -94,3 +100,14 @@ class PhonePasswordLoginAPIView(APIView):
             return Response({'success': True, 'user_id': user.id, 'csrf_token': get_token(request)})
         else:
             return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def getmeview(request):
+    """
+    Simple view to return current authenticated user's info.
+    """
+    if request.user.is_authenticated:
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+    else:
+        return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)

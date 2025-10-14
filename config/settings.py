@@ -26,12 +26,17 @@ SECRET_KEY = 'h%voaxg@x80+c8h@b#vp&2pgfv=ltq-4s%w0!3m!!vkcmrb&sy'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
+
+
+# Django 4.x: Set default auto field for primary keys
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,8 +48,10 @@ INSTALLED_APPS = [
     'inventory',
     'log',
     'corsheaders',
+    'drf_yasg',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -118,15 +125,20 @@ REST_FRAMEWORK = {
         # Or IsAuthenticatedOrReadOnly if some GET requests should be public
         # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     # Optional: Add pagination, filtering, etc.
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
 }
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+}
+SWAGGER_SETTINGS = {
+    'tagsSorter': 'alpha',
+    'operationsSorter': 'alpha'
 }
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
@@ -147,10 +159,15 @@ USE_TZ = True
 STATIC_URL = '/static/'
 # Add STATIC_ROOT for collectstatic in production
 # STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Default for Create React App
-    "http://127.0.0.1:3000", # Sometimes needed depending on how you access it
-    # Add other origins if needed (e.g., Vite default: "http://localhost:5173")
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",  # Default for Create React App
+#     "http://localhost:5173",  # Default for Vite
+#     "http://127.0.0.1:3000", # Sometimes needed depending on how you access it
+#     "http://127.0.0.1:5173", # Sometimes needed depending on how you access it
+#     "http://192.168.1.33:5173",
+#     "http://192.168.1.45:3000",
+#         # Add other origins if needed (e.g., Vite default: "http://localhost:5173")
+# ]
+# CORS_ALLOW_ORIGINS = ["*"]
 CORS_ALLOW_CREDENTIALS = True # If you need cookies/sessions sent across domains
-# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True
