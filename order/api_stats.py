@@ -4,7 +4,9 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import AllowAny
 from django.db.models import Count, Q
-
+from drf_yasg import openapi
+from datetime import datetime, timedelta
+from django.utils.dateparse import parse_datetime
 from drf_yasg.utils import swagger_auto_schema
 class OrdersPerUserAndTableView(APIView):
     """
@@ -13,13 +15,46 @@ class OrdersPerUserAndTableView(APIView):
 
     permission_classes = [AllowAny]  # Adjust permissions as needed
 
-    @swagger_auto_schema(tags=['Stats'])
+    @swagger_auto_schema(tags=['Stats'],
+        manual_parameters=[
+                openapi.Parameter('period', openapi.IN_QUERY, description="Time period for stats (day, week, month, custom). Default is 'day'.", type=openapi.TYPE_STRING),
+                openapi.Parameter("start_time", openapi.IN_QUERY, description="Start of the time window (ISO 8601 format)", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                openapi.Parameter("end_time", openapi.IN_QUERY, description="End of the time window (ISO 8601 format)", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+            ])
     def get(self, request, *args, **kwargs):
         from order.models import Order, OrderItem, MenuItem
         from inventory.models import Inventory, Table
         User = get_user_model()
 
         # Orders per user (not completed)
+        period = request.query_params.get('period', 'day')  # Default to 'day'
+        start_time_str = request.query_params.get('start_time')
+        end_time_str = request.query_params.get('end_time')
+        now = datetime.now()
+
+        # 2. Determine the date range based on the period
+        if period == 'day':
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = now
+        elif period == 'week':
+            start_date = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = now
+        elif period == 'month':
+            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = now
+        elif period == 'custom' and start_time_str and end_time_str:
+            start_date = parse_datetime(start_time_str)
+            end_date = parse_datetime(end_time_str)
+        else:
+            # Default to 'day' if period is invalid or custom params are missing
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = now
+
+        # 3. Create a Q object for the time window to use inside annotations
+        time_filter = Q()
+        if start_date and end_date:
+            time_filter = Q(orders__c_at__range=(start_date, end_date))
+    
         users = User.objects.annotate(
             order_count=Count('orders', filter=Q(orders__order_status__exact=None) | ~Q(orders__order_status='completed'))
         )
@@ -28,9 +63,14 @@ class OrdersPerUserAndTableView(APIView):
                 "user_id": user.id,
                 "username": getattr(user, "username", str(user)),
                 "order_count": Order.objects.filter(user=user).exclude(order_status="completed").count(),
+                "amount": sum(Order.objects.filter(user=user).exclude(order_status="completed").values_list('amount', flat=True)),
             }
             for user in users
         ]
+        non_completed_orders = [{
+            "order_count": Order.objects.exclude(order_status="completed").count(),
+            "amount":sum(Order.objects.exclude(order_status="completed").values_list('amount', flat=True))
+        }]
         # for user in users:
         #     for order in Order.objects.filter(user=user, order_status="completed"):
         #         print(order.diff())
@@ -69,11 +109,11 @@ class OrdersPerUserAndTableView(APIView):
                     all_earned += order.diff()
             return all_earned
             
-
+        
         all_data = [
             {
-                "all_earned": get_all_earned(),
-                
+                "overall_amount_from_commission": get_all_earned(),
+                "revenue_with_taxes": sum(Order.objects.filter(order_status="completed").values_list('amount', flat=True)),
 
             }
             
@@ -173,6 +213,10 @@ class OrdersPerUserAndTableView(APIView):
         total_orders = Order.objects.count()
 
         return Response({
+            "period": period,
+            "start_date": start_date,
+            "end_date": end_date,
+            "all_data": all_data,
             "orders_per_user": non_completed_orders_per_user,
             "pending_order_per_user":pending_order_per_user,
             "processing_order_per_user": processing_order_per_user,

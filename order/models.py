@@ -69,6 +69,25 @@ class Order(models.Model):
             self.save(update_fields=['subamount', 'amount'])
         return self.amount
 
+
+class CompletedOrderManager(models.Manager):
+    """A custom manager that returns only completed orders."""
+    def get_queryset(self):
+        return super().get_queryset().filter(order_status='completed')
+
+class CompletedOrder(Order):
+    """A proxy model to represent only completed orders for stats and reporting."""
+    objects = CompletedOrderManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Completed Order"
+        verbose_name_plural = "Completed Orders"
+
+    def get_profit(self):
+        """Calculates the profit (commission) from this completed order."""
+        return self.amount - self.subamount
+
 class MenuItem(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)

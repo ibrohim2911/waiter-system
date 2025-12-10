@@ -1,12 +1,12 @@
 # user/views.py
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import authenticate, login
 from .models import User
-from .serializers import UserSerializer, PinLoginSerializer
+from .serializers import UserSerializer, PinLoginSerializer, ChangePasswordSerializer
 # Import UserSerializer from the correct location
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -20,7 +20,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
     # Only admins can view user list/details via API
     permission_classes = [permissions.IsAdminUser]
-    
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PinLoginAPIView(APIView):
@@ -50,6 +49,7 @@ class PinLoginAPIView(APIView):
         else:
             return Response({'error': 'Invalid PIN'}, status=status.HTTP_401_UNAUTHORIZED)
 from django.middleware.csrf import get_token
+
 class PhonePasswordJWTLoginAPIView(APIView):
     """
     API endpoint for phone/password login that returns JWT tokens.
@@ -77,6 +77,7 @@ class PhonePasswordJWTLoginAPIView(APIView):
             }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+
 class PhonePasswordLoginAPIView(APIView):
     """
     API endpoint for phone/password login using session authentication.
@@ -100,6 +101,7 @@ class PhonePasswordLoginAPIView(APIView):
             return Response({'success': True, 'user_id': user.id, 'csrf_token': get_token(request)})
         else:
             return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def getmeview(request):
@@ -111,3 +113,22 @@ def getmeview(request):
         return Response(serializer.data)
     else:
         return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class ChangePasswordView(generics.UpdateAPIView):
+    """
+    An endpoint for changing password for authenticated users.
+    """
+    serializer_class = ChangePasswordSerializer
+    model = User
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response({"detail": "Password updated successfully"}, status=status.HTTP_200_OK)

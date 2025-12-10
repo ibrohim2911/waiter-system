@@ -47,7 +47,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'menu_item', 'item_name', 'item_price', 'quantity']
+        fields = ['id', 'order', 'menu_item', 'item_name', 'item_price', 'quantity', 'c_at', 'u_at']
         # The inventory validation and reduction logic has been moved to a post_save signal
         # on the OrderItem model (order/models.py). This ensures the logic is applied
         # consistently for both creates and updates, from any source (API, admin, etc.).

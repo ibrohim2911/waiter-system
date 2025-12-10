@@ -99,7 +99,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     serializer_class = OrderItemSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = OrderPagination
-
+    
     def get_queryset(self):
         """ Filter order items based on the user who owns the parent order. """
         user = self.request.user

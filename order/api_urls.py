@@ -15,6 +15,6 @@ router.register(r'reservations', views.ReservationsViewSet, basename='reservatio
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('stats/orders-per-user-and-table/', OrdersPerUserAndTableView.as_view(), name='orders_per_user_and_table'),
+    path('order-stats/', OrdersPerUserAndTableView.as_view(), name='orders_per_user_and_table'),
     path('reports/admin/', AdminReportView.as_view(), name='admin_report'),
 ]
