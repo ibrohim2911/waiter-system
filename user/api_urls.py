@@ -13,6 +13,7 @@ urlpatterns = [
     path('pin-login/', views.PinLoginAPIView.as_view(), name='pin-login'),
     path('phone-login/', views.PhonePasswordLoginAPIView.as_view(), name='phone-login'),
     path('phone-jwt-login/', views.PhonePasswordJWTLoginAPIView.as_view(), name='phone-jwt-login'),
+    path('logout/', views.LogoutAPIView.as_view(), name='logout'),
     path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
 
 ]

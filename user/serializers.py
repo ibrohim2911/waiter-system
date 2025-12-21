@@ -4,9 +4,47 @@ from .models import User
 from django.contrib.auth.password_validation import validate_password
 
 class UserSerializer(serializers.ModelSerializer):
+    # Allow setting password and pin when creating/updating users
+    password = serializers.CharField(write_only=True, required=False, allow_null=True)
+    pin = serializers.CharField(write_only=True, required=False, allow_null=True)
+
     class Meta:
         model = User
-        fields = ['id', 'phone_number', 'name', 'email', 'role', 'is_staff', 'is_active']
+        fields = ['id', 'phone_number', 'name', 'email', 'role', 'is_staff', 'is_active', 'password', 'pin']
+
+    def validate_password(self, value):
+        if value:
+            validate_password(value)
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        pin = validated_data.pop('pin', None)
+        user = User(**validated_data)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        # handle pin
+        if pin is not None:
+            user.set_pin(pin)
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        pin = validated_data.pop('pin', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if password:
+            instance.set_password(password)
+        if pin is not None:
+            instance.set_pin(pin)
+
+        instance.save()
+        return instance
 
 class PinLoginSerializer(serializers.Serializer):
     pin = serializers.CharField(write_only=True)

@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import AllowAny
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from drf_yasg import openapi
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
@@ -123,6 +123,7 @@ class OrdersPerUserAndTableView(APIView):
                 "user_id": user.id,
                 "username": getattr(user, "username", str(user)),
                 "pending_order_count": Order.objects.filter(user=user, order_status="pending").count(),
+                
             }
             for user in users
         ]
@@ -134,6 +135,42 @@ class OrdersPerUserAndTableView(APIView):
             }
             for user in users
         ]
+
+
+        # Combined: orders per user per location (with status breakdown and amount)
+        orders_per_user_per_location = []
+        for user in users:
+            loc_qs = (
+                Order.objects
+                .filter(user=user)
+                .values('table__location')
+                .annotate(
+                    total=Count('id'),
+                    pending=Count('id', filter=Q(order_status='pending')),
+                    processing=Count('id', filter=Q(order_status='processing')),
+                    completed=Count('id', filter=Q(order_status='completed')),
+                    amount=Sum('amount')
+                )
+                .order_by('table__location')
+            )
+
+            locations = [
+                {
+                    'location': loc.get('table__location') or 'unknown',
+                    'order_count': loc.get('total', 0),
+                    'pending_count': loc.get('pending', 0),
+                    'processing_count': loc.get('processing', 0),
+                    'completed_count': loc.get('completed', 0),
+                    'amount': float(loc.get('amount') or 0)
+                }
+                for loc in loc_qs
+            ]
+
+            orders_per_user_per_location.append({
+                'user_id': user.id,
+                'username': getattr(user, 'username', str(user)),
+                'locations': locations,
+            })
 
 
         # Orders per table location (not completed)
@@ -217,6 +254,7 @@ class OrdersPerUserAndTableView(APIView):
             "start_date": start_date,
             "end_date": end_date,
             "all_data": all_data,
+            "orders_per_user_per_location": orders_per_user_per_location,
             "orders_per_user": non_completed_orders_per_user,
             "pending_order_per_user":pending_order_per_user,
             "processing_order_per_user": processing_order_per_user,
