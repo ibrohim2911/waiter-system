@@ -54,6 +54,12 @@ class PinLoginSerializer(serializers.Serializer):
         if not value:
             raise serializers.ValidationError("PIN cannot be empty.")
         return value
+
+
+class PhonePasswordLoginSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
 class ChangePasswordSerializer(serializers.Serializer):
     """
     Serializer for password change endpoint.
@@ -80,3 +86,21 @@ class ChangePasswordSerializer(serializers.Serializer):
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
         user.save()
+
+
+from django.contrib.auth.hashers import check_password
+class CustomLoginS(serializers.Serializer):
+    phone_number = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        phone_number = data.get('phone_number')
+        password = data.get('password')
+
+        user = User.objects.filter(phone_number=phone_number).first()
+        if not check_password(password, user.password):
+            raise serializers.ValidationError("Xato")
+        
+        data['token'] = user.token()
+        
+        return data

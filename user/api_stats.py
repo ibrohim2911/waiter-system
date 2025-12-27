@@ -14,7 +14,7 @@ from inventory.models import Inventory, Table
 class UserStatsView(APIView):
     """
     Returns statistics related to users, such as earnings and order counts.
-    Supports filtering by a time period using 'period' (day, week, month)
+    Supports filtering by a time period using 'period' (day, week, month, alltime)
     or a custom range with 'start_time' and 'end_time'.
     Example: /api/v1/user-stats/?period=week
     """
@@ -24,7 +24,7 @@ class UserStatsView(APIView):
     @swagger_auto_schema(
         tags=['Stats'],
             manual_parameters=[
-                openapi.Parameter('period', openapi.IN_QUERY, description="Time period for stats (day, week, month, custom). Default is 'day'.", type=openapi.TYPE_STRING),
+                openapi.Parameter('period', openapi.IN_QUERY, description="Time period for stats (day, week, month, alltime, custom). Default is 'day'.", type=openapi.TYPE_STRING),
                 openapi.Parameter("start_time", openapi.IN_QUERY, description="Start of the time window (ISO 8601 format)", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
                 openapi.Parameter("end_time", openapi.IN_QUERY, description="End of the time window (ISO 8601 format)", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
             ]
@@ -39,6 +39,7 @@ class UserStatsView(APIView):
         now = datetime.now()
 
         # 2. Determine the date range based on the period
+        start_date, end_date = None, None
         if period == 'day':
             start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = now
@@ -51,8 +52,12 @@ class UserStatsView(APIView):
         elif period == 'custom' and start_time_str and end_time_str:
             start_date = parse_datetime(start_time_str)
             end_date = parse_datetime(end_time_str)
+        elif period == 'alltime':
+            # For 'alltime', we don't set dates, so no time filter will be applied.
+            pass
         else:
-            # Default to 'day' if period is invalid or custom params are missing
+            # Default to 'day' if period is invalid
+            period = 'day'
             start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = now
 

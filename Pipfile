@@ -4,13 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = ">=4,<5"
 djangorestframework = "~=3.14.0" # Use DRF 3.14.x
 django-cors-headers = "*"
 djangorestframework-simplejwt = "*"
 django-filter = "*"
 django-unfold = "*"
 drf-yasg = "*"
+django = {extras = ["argon2"], version = "*"}
 
 [dev-packages]
 

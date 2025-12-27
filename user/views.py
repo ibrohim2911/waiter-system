@@ -8,7 +8,7 @@ from django.contrib.auth import logout as django_logout
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import authenticate, login
 from .models import User
-from .serializers import UserSerializer, PinLoginSerializer, ChangePasswordSerializer
+from .serializers import UserSerializer, PinLoginSerializer, ChangePasswordSerializer, PhonePasswordLoginSerializer
 # Import UserSerializer from the correct location
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -56,13 +56,15 @@ class PhonePasswordJWTLoginAPIView(APIView):
     API endpoint for phone/password login that returns JWT tokens.
     """
     authentication_classes = []
-    permission_classes = []
+    permission_classes = [permissions.AllowAny]
+    serializer_class = PhonePasswordLoginSerializer
 
     def post(self, request):
-        phone_number = request.data.get('phone_number')
-        password = request.data.get('password')
-        if not phone_number or not password:
-            return Response({'error': 'phone_number and password required.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        phone_number = serializer.validated_data.get('phone_number')
+        password = serializer.validated_data.get('password')
 
         user = authenticate(request, username=phone_number, password=password)
         if user is not None:
@@ -162,3 +164,13 @@ class ChangePasswordView(generics.UpdateAPIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response({"detail": "Password updated successfully"}, status=status.HTTP_200_OK)
+        
+from .serializers import CustomLoginS
+class LoginView2(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        ser = CustomLoginS(data=request.data)
+        ser.is_valid(raise_exception=True)
+        get_token = ser.validated_data['token']
+        return Response(get_token, status=status.HTTP_200_OK)

@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAdminUser
 from django.db.models import Sum, F, Q, Count
 from django.utils.dateparse import parse_datetime
 from order.models import Order, OrderItem, MenuItem
-from inventory.models import Inventory, InventoryUsage
+from inventory.models import Inventory, InventoryUsage, Table
 from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta
 
@@ -17,9 +17,9 @@ from django.utils.decorators import method_decorator
 MANUAL_PARAMS = [
     openapi.Parameter(
         'period', openapi.IN_QUERY,
-        description="Time period: day|week|month|custom (default: day)",
+        description="Time period: day|week|month|alltime|custom (default: day)",
         type=openapi.TYPE_STRING,
-        enum=['day', 'week', 'month', 'custom']
+        enum=['day', 'week', 'month', 'alltime', 'custom']
     ),
     openapi.Parameter(
         'start', openapi.IN_QUERY,
@@ -57,7 +57,7 @@ class AdminReportView(APIView):
       - consolidated_summary: high-level totals
 
     Query params:
-      - period: day|week|month|custom (default: day)
+      - period: day|week|month|alltime|custom (default: day)
       - start, end: ISO datetimes when period=custom
       - reports: comma-separated list of reports to include (default: all implemented)
     """
@@ -77,7 +77,9 @@ class AdminReportView(APIView):
 
     def _parse_period(self, period, start, end):
         now = datetime.now()
-        if period == 'day':
+        if period == 'alltime':
+            return None, None
+        elif period == 'day':
             start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = now
         elif period == 'week':
@@ -110,7 +112,9 @@ class AdminReportView(APIView):
         start_date, end_date = self._parse_period(period, start, end)
 
         # Base queryset for orders in range
-        orders_qs = Order.objects.filter(c_at__gte=start_date, c_at__lte=end_date)
+        orders_qs = Order.objects.all()
+        if start_date and end_date:
+            orders_qs = orders_qs.filter(c_at__gte=start_date, c_at__lte=end_date)
 
         response = {
             'period': period,
@@ -125,6 +129,10 @@ class AdminReportView(APIView):
             'order_count': orders_qs.count(),
             'reports': {}
         }
+        
+        # ... (rest of the method is unchanged) ...
+        # (The following code is identical to the original file but included
+        # for completeness of the replacement operation)
 
         # Top-level totals (batch in one aggregation)
         agg_totals = orders_qs.aggregate(
@@ -189,10 +197,26 @@ class AdminReportView(APIView):
             # Commission/profit derived from order.amount - order.subamount
             commission_total = orders_qs.aggregate(total=Sum(F('amount') - F('subamount')))['total'] or 0
 
+            # Order item stats (total count)
+            total_order_items = OrderItem.objects.count()
+            # Menu item stats (total count)
+            total_menu_items = MenuItem.objects.count()
+            # Inventory stats (total count)
+            total_inventory_items = Inventory.objects.count()
+            # Table stats (total count)
+            total_tables = Table.objects.count()
+            # Order stats (total count)
+            total_orders = Order.objects.count()
+
             response['reports']['consolidated_summary'] = {
                 'gross_sales': float(gross_sales),
                 'commission_total': float(commission_total),
                 'order_count': orders_qs.count(),
+                'total_order_items': total_order_items,
+                'total_menu_items': total_menu_items,
+                'total_inventory_items': total_inventory_items,
+                'total_tables': total_tables,
+                'total_orders': total_orders,
             }
 
         # Revenue by category

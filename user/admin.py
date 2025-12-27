@@ -65,7 +65,7 @@ class UserAdmin(ModelAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('name', 'phone_number', 'email', 'role', 'pin_change', 'pin_confirm')} # Add PIN fields to creation form too
+            'fields': ('name', 'phone_number', 'email', 'role',"password", 'pin_change', 'pin_confirm')} # Add PIN fields to creation form too
         ),
     )
     search_fields = ('phone_number', 'name', 'email')
