@@ -1,15 +1,18 @@
 # c:\Users\User\Desktop\waiter-system\order\models.py
 import decimal # Import decimal
+import logging
 from django.db import models, transaction
 # Ensure all necessary models are imported
 from inventory.models import Table, Inventory, InventoryUsage, MenuItemIngredient
 from django.core.exceptions import ValidationError
 from django.db.models import F
-from django.db.models.signals import post_save, post_delete, pre_delete
+from django.db.models.signals import post_save, post_delete, pre_delete, pre_save
 from django.dispatch import receiver
 from django.conf import settings
 
 User = settings.AUTH_USER_MODEL
+
+logger = logging.getLogger(__name__)
 
 ORDER_STATUS_CHOICES = [
     ('pending', 'Pending'),
@@ -48,6 +51,7 @@ class Order(models.Model):
         """Returns the difference between amount and subamount."""
         difference = self.amount - self.subamount
         return difference
+
     def calculate_order_total(self):
         """Calculates subamount (without commission) and amount (with commission) based on associated order items."""
         subtotal = decimal.Decimal('0.00')
@@ -121,16 +125,59 @@ class OrderItem(models.Model):
         if self.menu_item and not self.menu_item.is_available: # Check if menu_item exists
             raise ValidationError(f"'{self.menu_item.name}' is currently not available.")
 
-    # Keep save/delete overrides for immediate total recalculation
+    def _manage_inventory_on_save(self, is_new):
+        if not self.menu_item: return
+
+        if is_new:
+            _reduce_inventory(self)
+        else:
+            for ingredient_link in self.menu_item.ingredients.all().select_related('inventory'):
+                try:
+                    inventory_item = ingredient_link.inventory
+                    required_ingredient_qty_per_menu_item = ingredient_link.quantity
+                    new_total_required_qty = decimal.Decimal(str(self.quantity)) * required_ingredient_qty_per_menu_item
+
+                    usage_record, usage_created = InventoryUsage.objects.get_or_create(
+                        inventory=inventory_item,
+                        order_item=self,
+                        defaults={'used_quantity': decimal.Decimal('0.00')}
+                    )
+
+                    adjustment_qty = new_total_required_qty - usage_record.used_quantity
+
+                    if adjustment_qty != 0:
+                        if adjustment_qty > 0:
+                            inventory_item.reduce_quantity(adjustment_qty)
+                        elif adjustment_qty < 0:
+                            inventory_item.increase_quantity(abs(adjustment_qty))
+
+                        if new_total_required_qty <= 0 and not usage_created:
+                            usage_record.delete()
+                        elif new_total_required_qty > 0:
+                            usage_record.used_quantity = new_total_required_qty
+                            usage_record.save(update_fields=['used_quantity'])
+
+                except Inventory.DoesNotExist:
+                    print(f"Warning: Inventory item not found for ingredient link {ingredient_link.pk} during update.")
+                except ValidationError as e:
+                    raise ValidationError(f"Failed adjusting OrderItem {self.pk}: {e}")
+                except Exception as e:
+                    print(f"Error adjusting inventory for OrderItem {self.pk}: {e}")
+
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.order: # Recalculate only if linked to an order
-            self.order.calculate_order_total()
+        is_new = self._state.adding
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            self._manage_inventory_on_save(is_new)
+            if self.order:
+                self.order.calculate_order_total()
 
     def delete(self, *args, **kwargs):
-        order = self.order # Store order before deleting self
-        super().delete(*args, **kwargs)
-        if order: # Recalculate only if it was linked to an order
+        order = self.order
+        with transaction.atomic():
+            _increase_inventory(self)
+            super().delete(*args, **kwargs)
+        if order:
             order.calculate_order_total()
 
 
@@ -210,86 +257,6 @@ def _increase_inventory(order_item):
 
 
 
-@receiver(post_save, sender=OrderItem)
-def order_item_post_save_inventory_management(sender, instance, created, **kwargs):
-    """Manages inventory reduction/adjustment when an OrderItem is saved."""
-    if not instance.menu_item: return # Cannot manage inventory without a menu item
-
-    if created:
-        # Reduce inventory and create usage record on creation
-        _reduce_inventory(instance)
-    else:
-        # --- Refactored Update Logic ---
-        for ingredient_link in instance.menu_item.ingredients.all().select_related('inventory'):
-            try:
-                inventory_item = ingredient_link.inventory
-                required_ingredient_qty_per_menu_item = ingredient_link.quantity
-                # Ensure calculations use Decimal
-                new_total_required_qty = decimal.Decimal(str(instance.quantity)) * required_ingredient_qty_per_menu_item
-
-                # Get the existing usage record or initialize if not found
-                usage_record, usage_created = InventoryUsage.objects.get_or_create(
-                    inventory=inventory_item,
-                    order_item=instance,
-                    defaults={'used_quantity': decimal.Decimal('0.00')} # Default to 0 if just created
-                )
-
-                # Calculate the difference between new requirement and what was used before
-                adjustment_qty = new_total_required_qty - usage_record.used_quantity
-
-                if adjustment_qty != 0: # Only adjust if there's a change
-                    if adjustment_qty > 0: # Need to use more inventory
-                        inventory_item.reduce_quantity(adjustment_qty)
-                    elif adjustment_qty < 0: # Need to restore inventory
-                        inventory_item.increase_quantity(abs(adjustment_qty))
-
-                    # Update the usage record to reflect the new total requirement
-                    if new_total_required_qty <= 0 and not usage_created:
-                        usage_record.delete() # Remove usage if quantity becomes zero or less
-                    elif new_total_required_qty > 0 :
-                         usage_record.used_quantity = new_total_required_qty
-                         usage_record.save(update_fields=['used_quantity'])
-
-            except Inventory.DoesNotExist:
-                 print(f"Warning: Inventory item not found for ingredient link {ingredient_link.pk} during update.")
-            except ValidationError as e:
-                 # Re-raise validation errors (e.g., insufficient stock during adjustment)
-                 raise ValidationError(f"Failed adjusting OrderItem {instance.pk}: {e}")
-            except Exception as e:
-                 print(f"Error adjusting inventory for OrderItem {instance.pk}: {e}")
-        # --- End Refactored Update Logic ---
-
-    # Note: Order total calculation is handled by OrderItem.save override
-
-
-# Ensure this uses post_delete
-@receiver(pre_delete, sender=OrderItem)
-def order_item_pre_delete_inventory_management(sender, instance, **kwargs):
-    """Restores inventory BEFORE an OrderItem is deleted."""
-    print(f"OrderItem {instance.pk} pre_delete signal triggered.") # Debug
-    if not instance.menu_item: return
-    # Get usage records BEFORE they are deleted by cascade
-    usage_records = InventoryUsage.objects.filter(order_item=instance)
-
-    items_to_update = {} # {inventory_id: total_to_restore}
-    for usage in usage_records:
-        items_to_update[usage.inventory_id] = items_to_update.get(usage.inventory_id, decimal.Decimal('0.00')) + usage.used_quantity
-
-    try:
-        # Use transaction.atomic for safety if multiple updates occur
-        with transaction.atomic():
-            for inventory_id, total_to_restore in items_to_update.items():
-                if total_to_restore > 0:
-                    # Use QuerySet.update() with F() for atomic increment
-                    updated_count = Inventory.objects.filter(pk=inventory_id).update(
-                        quantity=F('quantity') + total_to_restore
-                    )
-                    if updated_count > 0:
-                        print(f"Attempted to restore {total_to_restore} to Inventory ID {inventory_id} (pre_delete).")
-                    else:
-                        print(f"Warning: Inventory ID {inventory_id} not found during update for restore (pre_delete).")
-    except Exception as e:
-        print(f"Error during inventory restore (pre_delete) for OrderItem {instance.pk}: {e}")
         
 
 # Order Cancellation Inventory Restore
@@ -375,3 +342,30 @@ def order_post_delete_update_table_availability(sender, instance, **kwargs):
             print(f"Warning: Table {instance.table_id} not found for deleted Order {instance.pk} in availability signal.")
         except Exception as e:
             print(f"Error in order_post_delete_update_table_availability signal for Order {instance.pk}: {e}")
+
+
+    # Capture the previous status before saving so post_save handlers can detect changes
+    @receiver(pre_save, sender=Order)
+    def order_pre_save_capture_status(sender, instance, **kwargs):
+        if instance.pk:
+            try:
+                previous = Order.objects.get(pk=instance.pk)
+                instance._previous_order_status = previous.order_status
+            except Order.DoesNotExist:
+                instance._previous_order_status = None
+        else:
+            instance._previous_order_status = None
+
+
+    @receiver(post_save, sender=Order)
+    def order_post_save_printer_on_status_change(sender, instance, created, **kwargs):
+        """Print the printer IP whenever an Order's status changes."""
+        prev = getattr(instance, '_previous_order_status', None)
+        curr = instance.order_status
+        # Consider only true status changes (not creation)
+        if not created and prev is not None and prev != curr:
+            try:
+                logger.info("printer ip: 192.168.100.51")
+            except Exception:
+                # Never let a logging error break order save flow
+                pass

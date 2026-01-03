@@ -93,7 +93,8 @@ class OrdersPerUserAndTableView(APIView):
         orders_per_user_per_location_stats = orders_in_period.values(
             'user__id', 'user__name', 'table__location'
         ).annotate(
-            order_count=Count('id')
+            pending_orders=Count('id', filter=Q(order_status='pending')),
+            processing_orders=Count('id', filter=Q(order_status='processing')),
         ).order_by('user__id', 'table__location')
 
         # 7. Reshape the existing data to fit the desired format.
