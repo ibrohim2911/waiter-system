@@ -10,23 +10,29 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 from datetime import timedelta
-
+from decouple import config
+import sys
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Detect if running as PyInstaller bundled .exe
+RUNNING_AS_EXE = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+if RUNNING_AS_EXE:
+    BASE_DIR = sys._MEIPASS
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'h%voaxg@x80+c8h@b#vp&2pgfv=ltq-4s%w0!3m!!vkcmrb&sy'
+# Load SECRET_KEY from .env; generate with: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+SECRET_KEY = config('SECRET_KEY', default='unsafe-development-key-change-in-production')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Auto-disable DEBUG in .exe bundle; enable in dev; can override with .env
+DEBUG = config('DEBUG', default=(not RUNNING_AS_EXE), cast=bool)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*", "127.0.0.1", "localhost"]
 
 
 
@@ -161,17 +167,25 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-# Add STATIC_ROOT for collectstatic in production
-# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",  # Default for Create React App
-#     "http://localhost:5173",  # Default for Vite
-#     "http://127.0.0.1:3000", # Sometimes needed depending on how you access it
-#     "http://127.0.0.1:5173", # Sometimes needed depending on how you access it
-#     "http://192.168.1.33:5173",
-#     "http://192.168.1.45:3000",
-#         # Add other origins if needed (e.g., Vite default: "http://localhost:5173")
-# ]
-# CORS_ALLOW_ORIGINS = ["*"]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # If you have a top-level static folder
+]
 CORS_ALLOW_CREDENTIALS = True # If you need cookies/sessions sent across domains
 CORS_ALLOW_ALL_ORIGINS = True
+
+
+# Use normal ESC/POS text size and disable raster rendering to keep receipts small
+PRINTER_TEXT_SIZE = config('PRINTER_TEXT_SIZE', default='normal')
+# Disable raster by default; enable only if you need fractional scaling
+PRINTER_USE_RASTER = config('PRINTER_USE_RASTER', default=False, cast=bool)
+PRINTER_SCALE = 1.0
+# Raster width (pixels) at the specified DPI for the printable area (80mm paper typical)
+PRINTER_RASTER_WIDTH = 576
+PRINTER_RASTER_DPI = 203
+
+# Restaurant display name used in receipts
+RESTAURANT_NAME = config('RESTAURANT_NAME', default='Akramjon-ustoz')
+
+# Optional shift label shown on receipts
+KASSA_SHIFT = config('KASSA_SHIFT', default='')
