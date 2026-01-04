@@ -13,15 +13,6 @@ if not exist "frontend" (
     exit /b 1
 )
 
-echo Collecting Django static files...
-python manage.py collectstatic --noinput
-
-if errorlevel 1 (
-    echo ERROR: collectstatic failed
-    exit /b 1
-)
-
-echo.
 echo Building frontend...
 cd frontend
 call npm run build
@@ -30,6 +21,14 @@ if errorlevel 1 (
     exit /b 1
 )
 cd ..
+
+echo Collecting Django static files...
+python manage.py collectstatic --noinput
+
+if errorlevel 1 (
+    echo ERROR: collectstatic failed
+    exit /b 1
+)
 
 echo.
 echo Building .exe with PyInstaller...

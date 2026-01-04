@@ -10,4 +10,5 @@ PyInstaller==6.1.0
 pywin32==306
 python-decouple==3.8
 argon2-cffi
+whitenoise==6.5.0
 

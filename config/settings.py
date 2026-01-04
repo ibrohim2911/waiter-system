@@ -13,10 +13,9 @@ from datetime import timedelta
 from decouple import config
 import sys
 import os
-
+from pathlib import Path
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+BASE_DIR = Path(__file__).resolve().parent.parent
 # Detect if running as PyInstaller bundled .exe
 RUNNING_AS_EXE = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 if RUNNING_AS_EXE:
@@ -32,8 +31,7 @@ SECRET_KEY = config('SECRET_KEY', default='unsafe-development-key-change-in-prod
 # Auto-disable DEBUG in .exe bundle; enable in dev; can override with .env
 DEBUG = config('DEBUG', default=(not RUNNING_AS_EXE), cast=bool)
 
-ALLOWED_HOSTS = ["*", "127.0.0.1", "localhost"]
-
+ALLOWED_HOSTS = ['*']
 
 
 # Django 4.x: Set default auto field for primary keys
@@ -64,6 +62,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Add corsheaders middleware if using it (usually high up)
     'django.middleware.common.CommonMiddleware',
@@ -79,7 +78,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'frontend', 'dist')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -100,13 +99,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__), 'db.sqlite3'),
     }
 }
+
 AUTHENTICATION_BACKENDS = [
     'user.backends.PinOnlyAuthBackend',      # Tries PIN login first
     'user.backends.PhonePasswordAuthBackend', # Falls back to phone/password
@@ -141,8 +140,8 @@ REST_FRAMEWORK = {
     # 'PAGE_SIZE': 10
 }
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 }
@@ -170,9 +169,35 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # If you have a top-level static folder
+    os.path.join(BASE_DIR, 'frontend', 'dist'),  # Vite build output
 ]
+# Cache configuration: use DB-backed cache. Create table with:
+#   python manage.py createcachetable django_cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
+
+# Helper: default cache timeout (seconds). Use per-call timeout as needed.
+CACHE_TTL = None
 CORS_ALLOW_CREDENTIALS = True # If you need cookies/sessions sent across domains
 CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://0.0.0.0:8000',
+]
+# WhiteNoise: serve static files efficiently with far-future cache headers for
+# hashed filenames. Works well for bundled desktop deployments.
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Max-age for static files (in seconds). Whitenoise will set long cache for
+# files with hashed names (via collectstatic + Manifest storage).
+WHITENOISE_MAX_AGE = 31536000  # 1 year
+# During development, set auto-refresh when DEBUG is True so static changes
+# are picked up without rebuilding the bundle.
+WHITENOISE_AUTOREFRESH = DEBUG
 
 
 # Use normal ESC/POS text size and disable raster rendering to keep receipts small
@@ -189,3 +214,17 @@ RESTAURANT_NAME = config('RESTAURANT_NAME', default='Akramjon-ustoz')
 
 # Optional shift label shown on receipts
 KASSA_SHIFT = config('KASSA_SHIFT', default='')
+# MIGRATION_MODULES = {
+#     'token_blacklist': None,
+# }
+from django.db.backends.signals import connection_created
+from django.dispatch import receiver
+
+@receiver(connection_created)
+def configure_sqlite(sender, connection, **kwargs):
+    if connection.vendor == 'sqlite':
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA journal_mode = WAL;')
+        cursor.execute('PRAGMA synchronous = NORMAL;')
+        cursor.execute('PRAGMA cache_size = -2000;')
+        cursor.execute('PRAGMA busy_timeout = 5000;')

@@ -57,6 +57,18 @@ python manage.py migrate
 python manage.py createsuperuser  # Optional: create admin user
 ```
 
+If you plan to use Django's database-backed caching, create the cache table before building:
+
+```bash
+python manage.py createcachetable django_cache
+```
+
+If you want client-side assets to be served with long-lived cache headers (recommended), the project uses WhiteNoise to serve static files with hashed filenames. Ensure you run `collectstatic` before building so hashed static filenames are produced:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
 ---
 
 ## Step 3: Build the Executable

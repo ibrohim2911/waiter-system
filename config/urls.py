@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from user.views import getmeview
-
+from django.views.generic import TemplateView
 # Re-add csrf view for CSRF cookie endpoint
 @ensure_csrf_cookie
 def csrf(request):
@@ -33,7 +33,8 @@ urlpatterns = [
     # path('orders/', include(('order.urls', 'order'), namespace='order')),
     # path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
     # path('users/', include(('user.urls', 'user'), namespace='user')),
-
+    
+    re_path(r'^(?!api/).*$', TemplateView.as_view(template_name='index.html')),
     # --- API URLs ---
     # Include the api_urls from each app
     path('api/v1/', include('order.api_urls')),

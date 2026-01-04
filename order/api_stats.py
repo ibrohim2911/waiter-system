@@ -90,7 +90,7 @@ class OrdersPerUserAndTableView(APIView):
         ).order_by('table__location')
 
         # 6. Orders per user per location
-        orders_per_user_per_location_stats = orders_in_period.values(
+        orders_per_user_per_location_stats = orders_in_period.filter(user__id=request.user.id).values(
             'user__id', 'user__name', 'table__location'
         ).annotate(
             pending_orders=Count('id', filter=Q(order_status='pending')),
