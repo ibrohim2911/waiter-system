@@ -5,8 +5,8 @@ import time
 import sys
 
 # Change these to your actual URLs
-VERSION_CHECK_URL = "https://your-repo-link.com/version.json"
-LATEST_EXE_URL = "https://your-repo-link.com/waiter.exe"
+VERSION_CHECK_URL = "https://github.com/ibrohim2911/waiter-system/blob/main/version.json"
+LATEST_EXE_URL = "https://github.com/waiter.exe"
 CURRENT_VERSION = "1.0.0" 
 
 def update():
