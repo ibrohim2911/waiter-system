@@ -168,8 +168,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # If you have a top-level static folder
-    os.path.join(BASE_DIR, 'frontend', 'dist'),  # Vite build output
+    os.path.join(BASE_DIR, 'frontend', 'dist'),
 ]
 # Cache configuration: use DB-backed cache. Create table with:
 #   python manage.py createcachetable django_cache
@@ -214,9 +213,9 @@ RESTAURANT_NAME = config('RESTAURANT_NAME', default='Akramjon-ustoz')
 
 # Optional shift label shown on receipts
 KASSA_SHIFT = config('KASSA_SHIFT', default='')
-# MIGRATION_MODULES = {
-#     'token_blacklist': None,
-# }
+MIGRATION_MODULES = {
+    'token_blacklist': None,
+}
 from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 
