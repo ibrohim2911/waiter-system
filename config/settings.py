@@ -214,8 +214,7 @@ RESTAURANT_NAME = config('RESTAURANT_NAME', default='Akramjon-ustoz')
 # Optional shift label shown on receipts
 KASSA_SHIFT = config('KASSA_SHIFT', default='')
 MIGRATION_MODULES = {
-    'token_blacklist': 'migrations.token_blacklist',
-}
+'token_blacklist': 'user.jwt_migrations',}
 from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 
