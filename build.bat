@@ -31,6 +31,7 @@ if errorlevel 1 (
 )
 
 echo.
+pyinstaller
 echo Building .exe with PyInstaller...
 pyinstaller waiter.spec
 
@@ -39,8 +40,4 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo.
-echo ===== BUILD COMPLETE =====
-echo Executable: dist\Restaurant\Restaurant.exe
-echo.
 pause

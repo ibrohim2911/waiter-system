@@ -1,30 +1,45 @@
+
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
 import os
 import sys
-
+import subprocess # <--- Add this
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-    try:
-        from django.core.management import execute_from_command_line
-        
-        # --- ADD THIS SECTION ---
-        # If the app is running as a built EXE and starts the server
-        if 'runserver' in sys.argv:
-            print("Checking for database updates...")
-            # This runs 'python manage.py migrate' automatically
-            execute_from_command_line(['manage.py', 'migrate', '--noinput'])
-            print("Database is up to date.")
-        # -------------------------
+    
+    # --- UPDATER TRIGGER START ---
+    # This checks if updater.exe exists in the same folder as the running app
+    if getattr(sys, 'frozen', False):
+        # We are running as a compiled .exe
+        current_dir = os.path.dirname(sys.executable)
+    else:
+        # We are running in a normal python environment
+        current_dir = os.path.dirname(os.path.abspath(__file__))
 
-    except ImportError as exc:
-        raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
-        ) from exc
-    execute_from_command_line(sys.argv)
+    updater_path = os.path.join(current_dir, "updater.exe")
+    
+    # Launch updater.exe silently if it exists
+    if os.path.exists(updater_path):
+        try:
+            # CREATE_NO_WINDOW ensures no black box pops up for the waiter
+            subprocess.Popen([updater_path], creationflags=0x08000000) 
+        except Exception:
+            pass 
+    # --- UPDATER TRIGGER END ---
+
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'waiter_system.settings')
+    from django.core.management import execute_from_command_line
+
+    # If running as an EXE (frozen), run migrations automatically before starting server
+    if getattr(sys, 'frozen', False) and len(sys.argv) == 1:
+        print("Checking database migrations...")
+        execute_from_command_line(['manage.py', 'migrate', '--noinput'])
+
+    # Standard run logic
+    if len(sys.argv) == 1:
+        execute_from_command_line(['manage.py', 'runserver', '0.0.0.0:8000', '--noreload'])
+    else:
+        execute_from_command_line(sys.argv)
 if __name__ == '__main__':
     main()
+

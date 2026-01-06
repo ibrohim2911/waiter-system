@@ -34,7 +34,6 @@ urlpatterns = [
     # path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
     # path('users/', include(('user.urls', 'user'), namespace='user')),
     
-    re_path(r'^(?!api/).*$', TemplateView.as_view(template_name='index.html')),
     # --- API URLs ---
     # Include the api_urls from each app
     path('api/v1/', include('order.api_urls')),
@@ -49,7 +48,8 @@ urlpatterns = [
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Swagger and Redoc endpoints
-    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    re_path(r'^(?!api/).*$', TemplateView.as_view(template_name='index.html')),
 ]
