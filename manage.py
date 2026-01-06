@@ -27,7 +27,7 @@ def main():
             pass 
     # --- UPDATER TRIGGER END ---
 
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'waiter_system.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     from django.core.management import execute_from_command_line
 
     # If running as an EXE (frozen), run migrations automatically before starting server

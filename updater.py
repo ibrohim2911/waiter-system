@@ -4,44 +4,52 @@ import subprocess
 import time
 import sys
 
-# Change these to your actual URLs
-VERSION_CHECK_URL = "https://github.com/ibrohim2911/waiter-system/blob/main/version.json"
-LATEST_EXE_URL = "https://github.com/waiter.exe"
-CURRENT_VERSION = "1.0.0" 
+# CONFIGURATION
+VERSION_URL = "https://raw.githubusercontent.com/ibrohim2911/waiter-system/main/version.json"
+# This URL should point to the direct download of your new .exe
+EXE_URL = "https://github.com/ibrohim2911/waiter-system/releases/latest/download/RestaurantServer.exe"
+LOCAL_VERSION = "1.0.0" 
+MAIN_EXE_NAME = "RestaurantServer.exe"
 
-def update():
+def run_update():
     try:
-        # 1. Check version
-        r = requests.get(VERSION_CHECK_URL, timeout=5)
-        latest_version = r.json().get("version")
+        # 1. Check for updates
+        r = requests.get(VERSION_URL, timeout=10)
+        remote_version = r.json().get("version")
 
-        if latest_version > CURRENT_VERSION:
-            print(f"Updating to {latest_version}...")
+        if remote_version > LOCAL_VERSION:
+            print(f"New version {remote_version} detected. downloading...")
             
-            # 2. Download new version as a temporary file
-            new_content = requests.get(LATEST_EXE_URL).content
-            with open("waiter_new.tmp", "wb") as f:
-                f.write(new_content)
+            # 2. Download new version to a temp file
+            response = requests.get(EXE_URL, stream=True)
+            temp_file = "RestaurantServer_new.tmp"
+            
+            with open(temp_file, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
 
-            # 3. Create the "Swapper" Batch file
-            # This script waits for waiter.exe to close, deletes it, and renames the new one
-            with open("swap.bat", "w") as f:
+            # 3. Create the Swap script
+            # We use a .bat because Windows won't let us delete an EXE while it's running
+            with open("update_swap.bat", "w") as f:
                 f.write(f"""
                 @echo off
-                taskkill /f /im waiter.exe >nul 2>&1
-                timeout /t 2 /nobreak > nul
-                del waiter.exe
-                ren waiter_new.tmp waiter.exe
-                start waiter.exe
-                del swap.bat
+                echo Waiting for application to close...
+                timeout /t 5 /nobreak > nul
+                taskkill /f /im {MAIN_EXE_NAME} >nul 2>&1
+                del "{MAIN_EXE_NAME}"
+                ren "{temp_file}" "{MAIN_EXE_NAME}"
+                start "" "{MAIN_EXE_NAME}"
+                del "update_swap.bat"
                 """)
             
-            # 4. Run the swapper and exit
-            subprocess.Popen("swap.bat", shell=True)
+            # 4. Launch the swap script and kill the updater
+            subprocess.Popen(["update_swap.bat"], shell=True)
             sys.exit()
             
     except Exception as e:
-        print(f"Update failed: {e}")
+        print(f"Update check skipped: {e}")
 
 if __name__ == "__main__":
-    update()
+    # Wait 15 seconds after waiter opens the app to check for updates
+    time.sleep(15)
+    run_update()
