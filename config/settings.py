@@ -34,7 +34,7 @@ DEBUG = config('DEBUG', default=(not RUNNING_AS_EXE), cast=bool)
 ALLOWED_HOSTS = ['*']
 
 
-# Django 4.x: Set default auto field for primary keys
+# Django 4.x: Set  auto field for primary keys
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Application definition
@@ -213,9 +213,9 @@ RESTAURANT_NAME = config('RESTAURANT_NAME', default='Akramjon-ustoz')
 
 # Optional shift label shown on receipts
 KASSA_SHIFT = config('KASSA_SHIFT', default='')
-MIGRATION_MODULES = {
-    'token_blacklist': None,
-}
+# MIGRATION_MODULES = {
+#     'token_blacklist': None,
+# }
 from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 
