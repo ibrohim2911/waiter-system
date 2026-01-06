@@ -15,6 +15,7 @@ pillow = ">=9.0.0"
 pyinstaller = "==6.1.0"
 pywin32 = "==306"
 python-decouple = "==3.8"
+requests = "*"
 
 [dev-packages]
 
