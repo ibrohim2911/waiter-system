@@ -31,29 +31,19 @@ class PhonePasswordAuthBackend(ModelBackend):
 class PinOnlyAuthBackend(ModelBackend):
     """
     Authenticates users based solely on a unique PIN.
-    PIN login is restricted to 'waiter' and 'accountant' roles.
+    PINs are stored in plaintext, so this backend performs a direct lookup.
     """
     def authenticate(self, request, pin=None, **kwargs):
-        if not pin: # Check for None or empty string
+        if not pin:
             return None
 
-        # --- CRITICAL FIX: Find user by checking PIN correctly ---
-        # We cannot filter directly on the hashed pin. We must iterate.
-        possible_users = User.objects.filter(
-            Q(role='waiter') | Q(role='accountant'),
-            is_active=True
-        ).exclude(pin__isnull=True).exclude(pin__exact='') # Optimization: only check users with a PIN set
-
-        for user in possible_users:
-            if user.check_pin(pin):
-                # Found the user with the matching PIN
-                return user
-
-        # If loop finishes without finding a match
-        # Optionally run a hasher once for timing consistency, though less critical here
-        # User().set_password(pin)
-        return None
-        # --- End Critical Fix ---
+        try:
+            # Direct lookup for the user by their plaintext PIN.
+            # This assumes PINs are unique across all users who have them.
+            return User.objects.get(pin=pin)
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            # If no user is found, or multiple users share the same PIN, authentication fails.
+            return None
 
     # get_user method is inherited from ModelBackend and should work fine.
 

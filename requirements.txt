@@ -1,0 +1,14 @@
+Django>=3.2,<4.0
+djangorestframework>=3.14.0
+django-cors-headers
+djangorestframework-simplejwt
+django-filter
+django-unfold
+drf-yasg
+Pillow>=9.0.0
+PyInstaller==6.1.0
+pywin32==306
+python-decouple==3.8
+argon2-cffi
+whitenoise==6.5.0
+

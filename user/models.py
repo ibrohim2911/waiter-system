@@ -4,6 +4,7 @@ from django.db import models
 from django.utils import timezone
 # Import password hashing functions
 from django.contrib.auth.hashers import make_password, check_password
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class UserManager(BaseUserManager):
     def create_user(self, phone_number, name, password=None, **extra_fields):
@@ -54,13 +55,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True, blank=True, null=True)
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='customer')
-
-    # --- NEW PIN FIELD ---
-    # Store hashed PIN. Allow blank/null for users who don't use PIN login (customers/admins).
-    pin = models.CharField(max_length=128, blank=True, null=True, verbose_name="PIN Hash")
-    # ---------------------
-
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='waiter')
+    pin = models.CharField(max_length=128, blank=True, null=True, verbose_name="PIN")
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
@@ -76,23 +72,28 @@ class User(AbstractBaseUser, PermissionsMixin):
     # --- NEW PIN METHODS ---
     def set_pin(self, raw_pin):
         """
-        Hashes the raw PIN and sets it on the user.
-        Never store raw PINs!
+        Sets the raw PIN on the user.
         """
         if not raw_pin:
             self.pin = None
         else:
-            # Use Django's standard password hashing for the PIN
-            self.pin = make_password(str(raw_pin)) # Ensure it's a string
+            self.pin = str(raw_pin)
 
     def check_pin(self, raw_pin):
         """
-        Checks if the raw PIN matches the stored hash.
+        Checks if the raw PIN matches the stored PIN.
         Returns True if it matches, False otherwise.
         """
         if not self.pin or not raw_pin:
             return False
-        return check_password(str(raw_pin), self.pin) # Ensure raw_pin is string
+        return self.pin == str(raw_pin)
+    
+    def token(self):
+        token = RefreshToken.for_user(self)
+        return {
+            'refresh': str(token),
+            'access': str(token.access_token),
+        }
     # ----------------------
 
     # Note: We rely on AbstractBaseUser's set_password and check_password for the main password field.

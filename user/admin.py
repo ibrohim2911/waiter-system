@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.hashers import make_password # Import hasher
 from .models import User
 from django import forms
+from unfold.admin import ModelAdmin
 
 # Custom Form to handle PIN setting in Admin
 class UserAdminForm(forms.ModelForm):
@@ -47,7 +48,7 @@ class UserAdminForm(forms.ModelForm):
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(ModelAdmin):
     form = UserAdminForm # Use the custom form
     list_display = ('name', 'phone_number', 'email', 'role', 'has_pin_set', 'is_staff', 'is_active', 'is_superuser') # Added has_pin_set
     list_filter = ('role', 'is_staff', 'is_active', 'is_superuser')
@@ -64,7 +65,7 @@ class UserAdmin(admin.ModelAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('name', 'phone_number', 'email', 'role', 'pin_change', 'pin_confirm')} # Add PIN fields to creation form too
+            'fields': ('name', 'phone_number', 'email', 'role',"password", 'pin_change', 'pin_confirm')} # Add PIN fields to creation form too
         ),
     )
     search_fields = ('phone_number', 'name', 'email')

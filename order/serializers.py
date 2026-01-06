@@ -31,7 +31,8 @@ class MenuItemSerializer(serializers.ModelSerializer):
             'description',
             'price',
             'category',
-            'is_available', # is_available is managed by signals, make read-only?
+            'is_available',
+            'is_frequent',
             'ingredients',
             'c_at',
             'u_at'
@@ -43,52 +44,18 @@ class MenuItemSerializer(serializers.ModelSerializer):
 class OrderItemSerializer(serializers.ModelSerializer):
     item_name = serializers.CharField(source='menu_item.name', read_only=True)
     item_price = serializers.DecimalField(source='menu_item.price', read_only=True, max_digits=10, decimal_places=2)
-    print('OrderItemSerializer: item_name:', item_name)
+
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'menu_item', 'item_name', 'item_price', 'quantity']
-        print('OrderItemSerializer: fields:', fields)
-    def validate(self, data):
-        print('OrderItemSerializer: validate:', data)
-        menu_item = data['menu_item']
-        quantity = data['quantity']
-        for ingredient in menu_item.ingredients.all():
-            inventory = ingredient.inventory
-            required = ingredient.quantity * quantity
-            if inventory.quantity < required:
-                raise serializers.ValidationError(
-                    f"Not enough {inventory.name} in inventory for {menu_item.name} (needed: {required}, available: {inventory.quantity})"
-                )
-        return data
-
-    def create(self, validated_data):
-        with transaction.atomic():
-            menu_item = validated_data['menu_item']
-            quantity = validated_data['quantity']
-            order_item = OrderItem.objects.create(**validated_data)
-            print(f"OrderItem created: {order_item.id} for menu item {menu_item.name} with quantity {quantity}")
-            for ingredient in menu_item.ingredients.all():
-                inventory = ingredient.inventory
-                used_quantity = ingredient.quantity * quantity
-                print(f"Inventory before reduction: {inventory.quantity}")
-                # Reduce inventory
-                inventory.quantity -= used_quantity
-                inventory.save(update_fields=['quantity'])
-                print(f"Inventory after reduction: {inventory.quantity}")
-
-                # Log usage
-                InventoryUsage.objects.create(
-                    inventory=inventory,
-                    order_item=order_item,
-                    used_quantity=used_quantity
-                )
-            return order_item
+        fields = ['id', 'order', 'menu_item', 'item_name', 'item_price', 'quantity', 'c_at', 'u_at']
+        # The inventory validation and reduction logic has been moved to a post_save signal
+        # on the OrderItem model (order/models.py). This ensures the logic is applied
+        # consistently for both creates and updates, from any source (API, admin, etc.).
 class OrderSerializer(serializers.ModelSerializer):
     # Keep items read-only here; manage OrderItems via OrderItemViewSet
     items = OrderItemSerializer(many=True, read_only=True, source='order_items')
     table_details = TableSerializer(source='table', read_only=True)
     user_name = serializers.CharField(source='user.name', read_only=True)
-    total_amount = serializers.DecimalField(source='amount', read_only=True, max_digits=10, decimal_places=2)
 
     # 'user' field will be automatically set based on request.user in the ViewSet
     # 'table' field allows linking to a table (ID)
@@ -106,10 +73,11 @@ class OrderSerializer(serializers.ModelSerializer):
             'u_at',
             'order_status',   # Writable status
             'items',          # Read-only nested items
-            'total_amount',   # Read-only calculated amount
+            'subamount',      # Read-only calculated subtotal
+            'amount',         # Read-only calculated total with commission
         ]
         # Fields managed by backend or derived
-        read_only_fields = ['user', 'c_at', 'u_at', 'total_amount']
+        read_only_fields = ['user', 'c_at', 'u_at', 'subamount', 'amount']
 
 
 # --- Reservations Serializer ---

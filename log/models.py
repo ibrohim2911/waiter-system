@@ -16,3 +16,5 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.model_name} {self.object_id} {self.action} at {self.timestamp}"
+    
+    

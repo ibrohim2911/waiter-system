@@ -9,7 +9,7 @@ from .models import Inventory, Table, InventoryUsage, MenuItemIngredient
 class TableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
-        fields = ['id', 'name', 'location', 'capacity', 'is_available']
+        fields = ['id', 'name', 'location', 'capacity', 'is_available', 'commission']
         # No read_only fields needed here unless specific fields shouldn't be API-editable
 
 # --- Inventory Serializer ---

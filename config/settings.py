@@ -10,28 +10,37 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 from datetime import timedelta
-
+from decouple import config
+import sys
 import os
-
+from pathlib import Path
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
+# Detect if running as PyInstaller bundled .exe
+RUNNING_AS_EXE = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+if RUNNING_AS_EXE:
+    BASE_DIR = sys._MEIPASS
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'h%voaxg@x80+c8h@b#vp&2pgfv=ltq-4s%w0!3m!!vkcmrb&sy'
+# Load SECRET_KEY from .env; generate with: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+SECRET_KEY = config('SECRET_KEY', default='unsafe-development-key-change-in-production')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Auto-disable DEBUG in .exe bundle; enable in dev; can override with .env
+DEBUG = config('DEBUG', default=(not RUNNING_AS_EXE), cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
+
+# Django 4.x: Set default auto field for primary keys
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,13 +52,17 @@ INSTALLED_APPS = [
     'inventory',
     'log',
     'corsheaders',
+    'drf_yasg',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Add corsheaders middleware if using it (usually high up)
     'django.middleware.common.CommonMiddleware',
@@ -65,7 +78,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'frontend', 'dist')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -77,19 +90,22 @@ TEMPLATES = [
         },
     },
 ]
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__), 'db.sqlite3'),
     }
 }
+
 AUTHENTICATION_BACKENDS = [
     'user.backends.PinOnlyAuthBackend',      # Tries PIN login first
     'user.backends.PhonePasswordAuthBackend', # Falls back to phone/password
@@ -118,22 +134,27 @@ REST_FRAMEWORK = {
         # Or IsAuthenticatedOrReadOnly if some GET requests should be public
         # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     # Optional: Add pagination, filtering, etc.
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
 }
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+}
+SWAGGER_SETTINGS = {
+    'tagsSorter': 'alpha',
+    'operationsSorter': 'alpha'
 }
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tashkent'
 
 USE_I18N = True
 
@@ -145,12 +166,65 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-# Add STATIC_ROOT for collectstatic in production
-# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Default for Create React App
-    "http://127.0.0.1:3000", # Sometimes needed depending on how you access it
-    # Add other origins if needed (e.g., Vite default: "http://localhost:5173")
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # If you have a top-level static folder
+    os.path.join(BASE_DIR, 'frontend', 'dist'),  # Vite build output
 ]
+# Cache configuration: use DB-backed cache. Create table with:
+#   python manage.py createcachetable django_cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
+
+# Helper: default cache timeout (seconds). Use per-call timeout as needed.
+CACHE_TTL = None
 CORS_ALLOW_CREDENTIALS = True # If you need cookies/sessions sent across domains
-# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://0.0.0.0:8000',
+]
+# WhiteNoise: serve static files efficiently with far-future cache headers for
+# hashed filenames. Works well for bundled desktop deployments.
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Max-age for static files (in seconds). Whitenoise will set long cache for
+# files with hashed names (via collectstatic + Manifest storage).
+WHITENOISE_MAX_AGE = 31536000  # 1 year
+# During development, set auto-refresh when DEBUG is True so static changes
+# are picked up without rebuilding the bundle.
+WHITENOISE_AUTOREFRESH = DEBUG
+
+
+# Use normal ESC/POS text size and disable raster rendering to keep receipts small
+PRINTER_TEXT_SIZE = config('PRINTER_TEXT_SIZE', default='normal')
+# Disable raster by default; enable only if you need fractional scaling
+PRINTER_USE_RASTER = config('PRINTER_USE_RASTER', default=False, cast=bool)
+PRINTER_SCALE = 1.0
+# Raster width (pixels) at the specified DPI for the printable area (80mm paper typical)
+PRINTER_RASTER_WIDTH = 576
+PRINTER_RASTER_DPI = 203
+
+# Restaurant display name used in receipts
+RESTAURANT_NAME = config('RESTAURANT_NAME', default='Akramjon-ustoz')
+
+# Optional shift label shown on receipts
+KASSA_SHIFT = config('KASSA_SHIFT', default='')
+# MIGRATION_MODULES = {
+#     'token_blacklist': None,
+# }
+from django.db.backends.signals import connection_created
+from django.dispatch import receiver
+
+@receiver(connection_created)
+def configure_sqlite(sender, connection, **kwargs):
+    if connection.vendor == 'sqlite':
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA journal_mode = WAL;')
+        cursor.execute('PRAGMA synchronous = NORMAL;')
+        cursor.execute('PRAGMA cache_size = -2000;')
+        cursor.execute('PRAGMA busy_timeout = 5000;')
