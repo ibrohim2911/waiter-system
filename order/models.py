@@ -1,4 +1,5 @@
 # c:\Users\User\Desktop\waiter-system\order\models.py
+from datetime import timezone
 import decimal # Import decimal
 import logging
 from django.db import models, transaction
@@ -13,6 +14,13 @@ from django.conf import settings
 User = settings.AUTH_USER_MODEL
 
 logger = logging.getLogger(__name__)
+
+PRINTER_STATUS_CHOICES = [
+    ('done', 'Done'),
+    ('pending', 'Pending'),
+    ('canselled', 'Canselled'),
+    ('error', 'Error'),
+]
 
 ORDER_STATUS_CHOICES = [
     ('pending', 'Pending'),
@@ -97,6 +105,7 @@ class MenuItem(models.Model):
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.CharField(max_length=100, choices=MENU_CATEGORY_CHOICES)
+    printer = models.ForeignKey('Printer', on_delete=models.SET_NULL, null=True, blank=True, related_name='menu_items')
     is_available = models.BooleanField(default=True)
     is_frequent = models.BooleanField(default=False)
     c_at = models.DateTimeField(auto_now_add=True)
@@ -195,12 +204,35 @@ class Reservations(models.Model):
 
     def clean(self):
         super().clean()
-        # Add reservation conflict validation if needed
 
+class Printer(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    ip_address = models.GenericIPAddressField()
+    port = models.IntegerField(default=9100) # Added port
+    is_cashier_printer = models.BooleanField(default=False)
+    is_enabled = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.ip_address})"
 
-# --- Signal Handlers ---
+class PrintJob(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('printing', 'Printing'),
+        ('printed', 'Printed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    )
 
-# Helper function to reduce inventory and create usage record
+    printer = models.ForeignKey(Printer, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payload = models.TextField() # Stores the actual text to print
+    error_message = models.TextField(blank=True, null=True)
+    c_at = models.DateTimeField(auto_now_add=True)
+    u_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Job {self.id} -> {self.printer.name} ({self.status})"
 def _reduce_inventory(order_item):
     if not order_item.menu_item: return
     for ingredient_link in order_item.menu_item.ingredients.all().select_related('inventory'):
@@ -220,7 +252,6 @@ def _reduce_inventory(order_item):
         except Exception as e:
              print(f"Error reducing inventory for OrderItem {order_item.pk}: {e}")
 
-# Helper function to restore inventory and delete usage record
 def _increase_inventory(order_item):
     """Restores inventory based on usage records using direct DB update."""
     if not order_item.menu_item: return
@@ -254,118 +285,63 @@ def _increase_inventory(order_item):
     except Exception as e:
         # Log potential errors during the update or delete process
         print(f"Error during inventory restore/usage delete for OrderItem {order_item.pk}: {e}")
-
-
-
-        
-
-# Order Cancellation Inventory Restore
-@receiver(post_save, sender=Order)
-def order_post_save_inventory_restore_on_cancel(sender, instance, created, **kwargs):
-    """Restores inventory if an existing order's status changes to 'cancelled'."""
+@receiver(post_save, sender=Order) # Replace 'yourapp' with your actual app name
+def order_post_save_trigger_printer(sender, instance, created, **kwargs):
+    """Prints full receipt to Cashier Printer when order is completed."""
     if not created:
-        # Check if the 'order_status' field was updated
-        update_fields = kwargs.get('update_fields', None)
-        status_updated = update_fields is None or 'order_status' in update_fields
-
-        if status_updated and instance.order_status == 'cancelled':
-            # Fetch the previous state reliably using refresh_from_db on a separate instance
-            # This is still potentially racy, but better than fetching by pk after save
+        update_fields = kwargs.get('update_fields')
+        # Check if order_status changed to completed
+        if instance.order_status == 'completed':
             try:
-                # Check if the status *was not* cancelled before this save
-                # This requires tracking the previous state, which post_save doesn't easily provide.
-                # A common workaround is to check if the object *just* became cancelled.
-                # We'll rely on the assumption that if status is now cancelled, we restore.
-                # A more robust solution uses django-dirtyfields or pre_save signal.
-
-                print(f"Order {instance.pk} status changed to cancelled. Restoring inventory...")
-                for order_item in instance.order_items.all():
-                    _increase_inventory(order_item) # Use helper to restore based on usage records
-                    print(f"Restored inventory related to OrderItem {order_item.pk}")
+                from .utils import cashier_receipt
+                
+                # 1. Generate Content
+                content = cashier_receipt(instance.id)
+                
+                # 2. Find Cashier Printer
+                printer = Printer.objects.filter(is_cashier_printer=True, is_enabled=True).first()
+                
+                if printer:
+                    # 3. Create Job
+                    PrintJob.objects.create(printer=printer, payload=content, status='pending')
+                else:
+                    logger.warning("No Cashier Printer found!")
 
             except Exception as e:
-                print(f"Error in order_post_save_inventory_restore_on_cancel signal for Order {instance.pk}: {e}")
+                logger.exception(f"Error creating cashier receipt for Order {instance.pk}: {e}")
 
-
-# Table Availability Management
-@receiver(post_save, sender=Order)
-def order_post_save_update_table_availability(sender, instance, created, **kwargs):
-    """
-    Updates the associated Table's availability based on Order status.
-    """
-    if instance.table_id:
+@receiver(post_save, sender=OrderItem)
+def orderitem_post_save_trigger_printer(sender, instance, created, **kwargs):
+    """Prints kitchen ticket to the specific printer defined in MenuItem."""
+    if created:
         try:
-            table = Table.objects.get(pk=instance.table_id)
-            active_order_statuses = ['pending', 'processing']
+            from .utils import orderitem_receipt
+            
+            # 1. Get the printer specific to this menu item (e.g., Kitchen vs Bar)
+            # Assuming MenuItem has a 'printer' ForeignKey field
+            target_printer = instance.menu_item.printer 
 
-            # Check if ANY active order exists for this table
-            has_any_active_order = Order.objects.filter(
-                table=table,
-                order_status__in=active_order_statuses
-            ).exists()
-
-            should_be_available = not has_any_active_order
-
-            if table.is_available != should_be_available:
-                table.is_available = should_be_available
-                table.save(update_fields=['is_available'])
-                print(f"Table {table.pk} availability set to {should_be_available} due to Order {instance.pk} status change.")
-
-        except Table.DoesNotExist:
-            print(f"Warning: Table {instance.table_id} not found for Order {instance.pk} in availability signal.")
+            if target_printer and target_printer.is_enabled:
+                # 2. Generate Content
+                content = orderitem_receipt(instance)
+                
+                # 3. Create Job
+                PrintJob.objects.create(printer=target_printer, payload=content, status='pending')
+        
         except Exception as e:
-            print(f"Error in order_post_save_update_table_availability signal for Order {instance.pk}: {e}")
+            logger.exception(f"Error creating item receipt: {e}")
 
-@receiver(post_delete, sender=Order)
-def order_post_delete_update_table_availability(sender, instance, **kwargs):
-    """
-    Updates the associated Table's availability when an Order is deleted.
-    """
-    if instance.table_id:
-        try:
-            # The order is already deleted, so we check for any *other* active orders on the table.
-            table = Table.objects.get(pk=instance.table_id)
-            active_order_statuses = ['pending', 'processing']
+@receiver(post_delete, sender=OrderItem)
+def orderitem_post_delete_trigger_printer(sender, instance, **kwargs):
+    """Prints cancellation ticket when item is deleted."""
+    try:
+        from .utils import cancelled_orderitem_receipt
+        
+        target_printer = instance.menu_item.printer 
 
-            has_any_active_order = Order.objects.filter(
-                table=table,
-                order_status__in=active_order_statuses
-            ).exists()
+        if target_printer and target_printer.is_enabled:
+            content = cancelled_orderitem_receipt(instance)
+            PrintJob.objects.create(printer=target_printer, payload=content, status='pending')
 
-            # If no active orders exist, the table should be available.
-            if not has_any_active_order and not table.is_available:
-                table.is_available = True
-                table.save(update_fields=['is_available'])
-                print(f"Table {table.pk} availability set to True due to Order {instance.pk} deletion.")
-
-        except Table.DoesNotExist:
-            print(f"Warning: Table {instance.table_id} not found for deleted Order {instance.pk} in availability signal.")
-        except Exception as e:
-            print(f"Error in order_post_delete_update_table_availability signal for Order {instance.pk}: {e}")
-
-
-    # Capture the previous status before saving so post_save handlers can detect changes
-    @receiver(pre_save, sender=Order)
-    def order_pre_save_capture_status(sender, instance, **kwargs):
-        if instance.pk:
-            try:
-                previous = Order.objects.get(pk=instance.pk)
-                instance._previous_order_status = previous.order_status
-            except Order.DoesNotExist:
-                instance._previous_order_status = None
-        else:
-            instance._previous_order_status = None
-
-
-    @receiver(post_save, sender=Order)
-    def order_post_save_printer_on_status_change(sender, instance, created, **kwargs):
-        """Print the printer IP whenever an Order's status changes."""
-        prev = getattr(instance, '_previous_order_status', None)
-        curr = instance.order_status
-        # Consider only true status changes (not creation)
-        if not created and prev is not None and prev != curr:
-            try:
-                logger.info("printer ip: 192.168.100.51")
-            except Exception:
-                # Never let a logging error break order save flow
-                pass
+    except Exception as e:
+        logger.exception(f"Error creating cancel receipt: {e}")

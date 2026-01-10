@@ -12,7 +12,28 @@ from .serializers import UserSerializer, PinLoginSerializer, ChangePasswordSeria
 # Import UserSerializer from the correct location
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.http import HttpResponse
+import json
+import os
 
+def config_js(request):
+    # Path where the launcher saves the raw settings
+    # We'll assume the launcher writes a simple 'settings.json' in the app folder
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'launcher_settings.json')
+    
+    config_data = {"API_URL": "http://localhost:8000"} # Default
+
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                config_data = json.load(f)
+        except:
+            pass
+
+    # Wrap the JSON in a global Javascript object
+    js_content = f"window.APP_CONFIG = {json.dumps(config_data)};"
+    
+    return HttpResponse(js_content, content_type="application/javascript")
 class UserViewSet(viewsets.ModelViewSet):
     """
     API endpoint for full CRUD on users.

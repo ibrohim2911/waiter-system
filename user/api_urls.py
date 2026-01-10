@@ -5,8 +5,11 @@ from . import views # Adjust import if needed
 from .api_stats import UserStatsView
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user')
+from django.urls import path
+from . import views
 
 urlpatterns = [
+    path('config.js', views.config_js, name='config_js'),
     path('', include(router.urls)),
     path('user-stats/', UserStatsView.as_view(), name='user-stats'),
     # New endpoint

@@ -152,7 +152,7 @@ const Users = () => {
 		<div>
 			<div className="mb-4 flex items-center justify-between">
 				<div className="flex items-center gap-3">
-					<h2 className="text-xl font-semibold" onClick={() => setMobileOpen((s) => !s)}>Users</h2>
+					<h2 className="text-xl font-semibold" onClick={() => setMobileOpen((s) => !s)}>Foydalanuvchilar</h2>
 					<button
 						className="md:hidden px-2 py-1 bg-zinc-700 hover:bg-zinc-600 text-white rounded text-sm"
 						onClick={() => setMobileOpen((s) => !s)}
@@ -165,7 +165,7 @@ const Users = () => {
 						onClick={() => setShowModal(true)}
 						className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm"
 					>
-						Add User
+						Foydalanuvchi qo'shish
 					</button>
 				</div>
 			</div>
@@ -175,21 +175,21 @@ const Users = () => {
 				<table className="min-w-full text-sm text-left">
 					<thead>
 							<tr className="text-zinc-300 text-xs uppercase tracking-wider">
-							<th className="px-4 py-3">Name</th>
-							<th className="px-4 py-3">Phone</th>
-							<th className="px-4 py-3">Email</th>
-							<th className="px-4 py-3">Role</th>
+							<th className="px-4 py-3">nomi</th>
+							<th className="px-4 py-3">tel raqami</th>
+							<th className="px-4 py-3">email</th>
+							<th className="px-4 py-3">lavozimi</th>
 							<th className="px-4 py-3">IsStaff</th>
 							<th className="px-4 py-3">IsActive</th>
 							<th className="px-4 py-3">IsSuperuser</th>
-							<th className="px-4 py-3">Actions</th>
+							<th className="px-4 py-3">Harakatlar</th>
 						</tr>
 					</thead>
 					<tbody>
 						{loading ? (
 							<tr>
 								<td colSpan={8} className="px-4 py-6 text-zinc-300 text-center">
-									Loading...
+									yuklanmoqda...
 								</td>
 							</tr>
 						) : error ? (
@@ -201,7 +201,7 @@ const Users = () => {
 						) : users.length === 0 ? (
 							<tr>
 								<td colSpan={8} className="px-4 py-6 text-zinc-400 text-center">
-									No users found.
+									Foydalanuvchilar topilmadi.
 								</td>
 							</tr>
 						) : (
@@ -234,8 +234,8 @@ const Users = () => {
 										</td>
 										<td className="px-4 py-3">
 											<div className="flex gap-2">
-												<button onClick={() => handleEditClick(u)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">Edit</button>
-												<button onClick={() => handleDelete(u)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">Delete</button>
+												<button onClick={() => handleEditClick(u)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">tahrirlash</button>
+												<button onClick={() => handleDelete(u)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">o'chirish</button>
 											</div>
 										</td>
 									</tr>
@@ -293,8 +293,8 @@ const Users = () => {
 									</div>
 								</div>
 								<div className="mt-3 flex gap-2 justify-end">
-									<button onClick={() => handleEditClick(u)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">Edit</button>
-									<button onClick={() => handleDelete(u)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">Delete</button>
+									<button onClick={() => handleEditClick(u)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">tahrirlash</button>
+									<button onClick={() => handleDelete(u)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">o'chirish</button>
 								</div>
 							</div>
 						);
@@ -314,23 +314,23 @@ const Users = () => {
 						<h3 className="text-lg font-semibold mb-3">{editingUser ? "Edit User" : "Add User"}</h3>
 						<div className="space-y-3">
 							<div>
-								<label className="block text-zinc-300 text-xs mb-1">Name</label>
+								<label className="block text-zinc-300 text-xs mb-1">ismi</label>
 								<input value={form.name} onChange={(e) => handleChange("name", e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
 							</div>
 							<div>
-								<label className="block text-zinc-300 text-xs mb-1">Phone</label>
+								<label className="block text-zinc-300 text-xs mb-1">tel raqami</label>
 								<input value={form.phone} onChange={(e) => handleChange("phone", e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
 							</div>
 							<div>
-								<label className="block text-zinc-300 text-xs mb-1">Email</label>
+								<label className="block text-zinc-300 text-xs mb-1">emaili</label>
 								<input value={form.email} onChange={(e) => handleChange("email", e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
 							</div>
 							<div>
-								<label className="block text-zinc-300 text-xs mb-1">Role</label>
+								<label className="block text-zinc-300 text-xs mb-1">lavozimi</label>
 								<select id="role" value={form.role} onChange={(e) => handleChange("role", e.target.value)} name="role" className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm">
 									  <option value="admin">Admin</option>
-									  <option value="waiter">Waiter</option>
-									  <option value="accountant">accountant</option>
+									  <option value="waiter">ofitsant</option>
+									  <option value="accountant">kassir</option>
 								</select>
 								<label className="block text-zinc-300 text-xs mb-1">pin</label>
 								<input type="text" value={form.pin} onChange={(e) => handleChange("pin", e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm"/>
@@ -355,7 +355,7 @@ const Users = () => {
 							{error && <div className="text-red-400 text-sm">{error}</div>}
 
 							<div className="flex justify-end gap-2 pt-2">
-								<button type="button" onClick={() => { setShowModal(false); setEditingUser(null); }} className="px-3 py-1 rounded bg-zinc-700 text-sm">Cancel</button>
+								<button type="button" onClick={() => { setShowModal(false); setEditingUser(null); }} className="px-3 py-1 rounded bg-zinc-700 text-sm">bekor qilish</button>
 								<button type="submit" disabled={creating} className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-sm">
 									{creating ? (editingUser ? "Saving..." : "Creating...") : (editingUser ? "Save" : "Create")}
 								</button>

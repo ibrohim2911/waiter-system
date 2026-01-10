@@ -98,7 +98,7 @@ const Items = () => {
     <div className="mt-8">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold" onClick={() => setMobileOpen((s) => !s)}>Inventory Items</h2>
+          <h2 className="text-xl font-semibold" onClick={() => setMobileOpen((s) => !s)}>Omborxona narsalari</h2>
           <button
             className="md:hidden px-2 py-1 bg-zinc-700 hover:bg-zinc-600 text-white rounded text-sm"
             onClick={() => setMobileOpen((s) => !s)}
@@ -106,7 +106,7 @@ const Items = () => {
             {mobileOpen ? 'Hide list' : 'Show list'}
           </button>
         </div>
-        <button onClick={openCreate} className="px-3 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm">Add Item</button>
+        <button onClick={openCreate} className="px-3 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm">narsa qo'shish</button>
       </div>
 
       {/* Desktop table */}
@@ -114,18 +114,18 @@ const Items = () => {
         <table className="min-w-full text-sm text-left">
           <thead>
             <tr className="text-zinc-300 text-xs uppercase tracking-wider">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Quantity</th>
-              <th className="px-4 py-3">Unit</th>
-              <th className="px-4 py-3">Price</th>
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="px-4 py-3">nomi</th>
+              <th className="px-4 py-3">soni</th>
+              <th className="px-4 py-3">o'chov birligi</th>
+              <th className="px-4 py-3">narx</th>
+              <th className="px-4 py-3">qo'shimcha ma'lumot</th>
+              <th className="px-4 py-3">harakatlar</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-zinc-300 text-center">Loading...</td>
+                <td colSpan={6} className="px-4 py-6 text-zinc-300 text-center">yuklanmoqda...</td>
               </tr>
             ) : error ? (
               <tr>
@@ -133,7 +133,7 @@ const Items = () => {
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-zinc-400 text-center">No items found.</td>
+                <td colSpan={6} className="px-4 py-6 text-zinc-400 text-center">hech narsa topilmadi.</td>
               </tr>
             ) : (
               items.map((it) => (
@@ -145,8 +145,8 @@ const Items = () => {
                   <td className="px-4 py-3 text-zinc-200">{String(it.description || "").slice(0, 60)}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(it)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">Edit</button>
-                      <button onClick={() => handleDelete(it)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">Delete</button>
+                      <button onClick={() => openEdit(it)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">tahrirlash</button>
+                      <button onClick={() => handleDelete(it)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">O'chirish</button>
                     </div>
                   </td>
                 </tr>
@@ -174,13 +174,13 @@ const Items = () => {
                   <div className="text-zinc-400 text-xs">{it.unit_of_measure} • {it.price}</div>
                 </div>
                 <div className="text-right text-xs text-zinc-400">
-                  <div>Qty: {it.quantity}</div>
+                  <div>soni: {it.quantity}</div>
                 </div>
               </div>
               <div className="mt-3 text-zinc-300 text-sm">{String(it.description || '').slice(0,120)}</div>
               <div className="mt-3 flex gap-2 justify-end">
-                <button onClick={() => openEdit(it)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">Edit</button>
-                <button onClick={() => handleDelete(it)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">Delete</button>
+                <button onClick={() => openEdit(it)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">tahrirlash</button>
+                <button onClick={() => handleDelete(it)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">O'chirish</button>
               </div>
             </div>
           ))
@@ -196,32 +196,32 @@ const Items = () => {
             <h3 className="text-lg font-semibold mb-3">{editingItem ? 'Edit Item' : 'Add Item'}</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-zinc-300 text-xs mb-1">Name</label>
+                <label className="block text-zinc-300 text-xs mb-1">nomi</label>
                 <input value={form.name} onChange={(e) => handleChange('name', e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-zinc-300 text-xs mb-1">Quantity</label>
+                  <label className="block text-zinc-300 text-xs mb-1">soni</label>
                   <input type="number" value={form.quantity} onChange={(e) => handleChange('quantity', Number(e.target.value))} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
                 </div>
                 <div>
-                  <label className="block text-zinc-300 text-xs mb-1">Unit</label>
+                  <label className="block text-zinc-300 text-xs mb-1">o'chov birligi</label>
                   <input value={form.unit_of_measure} onChange={(e) => handleChange('unit_of_measure', e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
                 </div>
                 <div>
-                  <label className="block text-zinc-300 text-xs mb-1">Price</label>
+                  <label className="block text-zinc-300 text-xs mb-1">narxi</label>
                   <input type="number" value={form.price} onChange={(e) => handleChange('price', Number(e.target.value))} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
                 </div>
               </div>
               <div>
-                <label className="block text-zinc-300 text-xs mb-1">Description</label>
+                <label className="block text-zinc-300 text-xs mb-1">qo'shimcha ma'lumot</label>
                 <textarea value={form.description} onChange={(e) => handleChange('description', e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" rows={3} />
               </div>
 
               {error && <div className="text-red-400 text-sm">{error}</div>}
 
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => { setShowModal(false); setEditingItem(null); }} className="px-3 py-1 rounded bg-zinc-700 text-sm">Cancel</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingItem(null); }} className="px-3 py-1 rounded bg-zinc-700 text-sm">bekor qilish</button>
                 <button type="submit" disabled={saving} className="px-3 py-1 rounded bg-green-600 hover:bg-green-500 text-white text-sm">{saving ? 'Saving...' : (editingItem ? 'Save' : 'Create')}</button>
               </div>
             </div>

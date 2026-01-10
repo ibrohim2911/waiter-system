@@ -2,7 +2,7 @@
 from django.db import transaction
 from rest_framework import serializers
 # Import all relevant models from this app
-from .models import Order, OrderItem, MenuItem, Reservations, InventoryUsage
+from .models import Order, OrderItem, MenuItem, Reservations, InventoryUsage, Printer
 # Import serializers from other apps
 from inventory.serializers import (
     TableSerializer,
@@ -17,11 +17,17 @@ except ImportError:
     UserSerializer = None # Handle case where it might not exist yet
 
 
+class PrinterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Printer
+        fields = ['id', 'name', 'ip_address', 'port']
+
 # --- MenuItem Serializer ---
 class MenuItemSerializer(serializers.ModelSerializer):
     # Nest the ingredients using the serializer we defined in inventory.serializers
     # Keep read_only=True if ingredients are managed via MenuItemIngredient endpoint
     ingredients = MenuItemIngredientSerializer(many=True, read_only=True)
+    printer_details = PrinterSerializer(source='printer', read_only=True)
 
     class Meta:
         model = MenuItem
@@ -31,6 +37,8 @@ class MenuItemSerializer(serializers.ModelSerializer):
             'description',
             'price',
             'category',
+            'printer',
+            'printer_details',
             'is_available',
             'is_frequent',
             'ingredients',

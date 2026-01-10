@@ -1,10 +1,10 @@
 const categories = [
-	{key: "frequent", label: "FREQUENTLY USED"},
-	{key: "mains", label: "MAINS"},
-	{key: "salads", label: "SALADS"},
-	{key: "drinks", label: "DRINKS"},
-	{key: "deserts", label: "DESERTS"},
-	{key: "appetizers", label: "APPETIZERS"},
+	{key: "frequent", label: "TEZ-TEZ ISHLATILADIGAN"},
+	{key: "mains", label: "ASOSIY OVQATLAR"},
+	{key: "salads", label: "SALATLAR"},
+	{key: "drinks", label: "ICHIMLIKLAR"},
+	{key: "deserts", label: "DESERTLAR"},
+	{key: "appetizers", label: "YENGIL TAOMLAR"},
 ];
 
 function MenuComponent({
@@ -49,7 +49,7 @@ function MenuComponent({
 				<div className="relative">
 					<input
 						className="w-full p-1 rounded border border-zinc-700 bg-zinc-800 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
-						placeholder="Search..."
+						placeholder="Qidirish..."
 						value={search}
 						onChange={e => onSearchChange(e.target.value)}
 					/>
@@ -59,7 +59,7 @@ function MenuComponent({
 							className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-red-400 text-lg px-1"
 							onClick={() => onSearchChange("")}
 							tabIndex={0}
-							aria-label="Clear search"
+							aria-label="Qidiruvni tozalash"
 						>
 							×
 						</button>
@@ -69,7 +69,7 @@ function MenuComponent({
 			<div className="flex-1 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-1 p-4 bg-zinc-900 overflow-y-auto">
 				{filteredMenuItems.length === 0 ? (
 					<div className="col-span-full text-zinc-500 text-center py-4">
-						No menu items found.
+						Menyu bandlari topilmadi.
 					</div>
 				) : (
 					filteredMenuItems.map(item => (

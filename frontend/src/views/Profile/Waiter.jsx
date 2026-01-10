@@ -112,7 +112,7 @@ const Waiter = ({ user }) => {
           </div>
           <div className="mt-4 border-t border-zinc-700 pt-4 space-y-2">
             <div className="flex justify-between">
-              <span className="font-semibold text-zinc-400">Phone:</span>
+              <span className="font-semibold text-zinc-400">tel raqami:</span>
               <span className="text-zinc-200 text-sm">
                 {user?.phone_number || "Not provided"}
               </span>
@@ -122,11 +122,11 @@ const Waiter = ({ user }) => {
             onSubmit={handlePasswordChange}
             className="mt-4 border-t border-zinc-700 pt-4 space-y-3"
           >
-            <h3 className="font-semibold text-zinc-300">Reset Password</h3>
+            <h3 className="font-semibold text-zinc-300">parolni almashtirish</h3>
             <input
               type="password"
               name="old_password"
-              placeholder="Old Password"
+              placeholder="eski parol"
               value={passwords.old_password}
               onChange={handlePasswordInputChange}
               className="w-full bg-zinc-700 text-white p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -134,7 +134,7 @@ const Waiter = ({ user }) => {
             <input
               type="password"
               name="new_password"
-              placeholder="New Password"
+              placeholder="yangi parol"
               value={passwords.new_password}
               onChange={handlePasswordInputChange}
               className="w-full bg-zinc-700 text-white p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -142,7 +142,7 @@ const Waiter = ({ user }) => {
             <input
               type="password"
               name="confirm_password"
-              placeholder="Confirm New Password"
+              placeholder="yangi parolni tasdiqlang"
               value={passwords.confirm_password}
               onChange={handlePasswordInputChange}
               className="w-full bg-zinc-700 text-white p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -157,7 +157,7 @@ const Waiter = ({ user }) => {
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"
             >
-              Update Password
+              parolni yangilash
             </button>
           </form>
           <div className="mt-4 border-t border-zinc-700 pt-4">
@@ -166,7 +166,7 @@ const Waiter = ({ user }) => {
               className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
             >
               <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-              <span>Logout</span>
+              <span>chiqish</span>
             </button>
           </div>
         </div>
@@ -174,7 +174,7 @@ const Waiter = ({ user }) => {
         <div className="lg:col-span-3">
           <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
             <h2 className="text-2xl font-bold text-zinc-200 flex items-center gap-2">
-              <ChartBarIcon className="h-6 w-6" /> Statistics
+              <ChartBarIcon className="h-6 w-6" /> statistikalar
             </h2>
             <div className="flex flex-wrap items-center gap-4">
               <DateRangePicker onChange={setStatsPeriod} />
@@ -182,42 +182,42 @@ const Waiter = ({ user }) => {
           </div>
 
           {statsLoading ? (
-            <div className="text-center text-zinc-300">Loading statistics...</div>
+            <div className="text-center text-zinc-300">yuklanmoqda...</div>
           ) : error ? (
             <div className="text-center text-red-400">{error}</div>
           ) : userStats ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-zinc-800 p-4 rounded-lg shadow-lg text-center">
                 <CurrencyDollarIcon className="h-8 w-8 mx-auto text-green-400 mb-2" />
-                <p className="text-zinc-400 text-sm">Total Earned</p>
+                <p className="text-zinc-400 text-sm">umumiy foyda</p>
                 <p className="text-2xl font-bold text-white">
-                  ${(userStats.total_earned || 0).toFixed(2)}
+                  ${(userStats.total_earned || 0)}
                 </p>
               </div>
               <div className="bg-zinc-800 p-4 rounded-lg shadow-lg text-center">
                 <CurrencyDollarIcon className="h-8 w-8 mx-auto text-yellow-400 mb-2" />
-                <p className="text-zinc-400 text-sm">Commission</p>
+                <p className="text-zinc-400 text-sm">umumiy summa</p>
                 <p className="text-2xl font-bold text-white">
-                  ${(userStats.earned || 0).toFixed(2)}
+                  ${(userStats.earned || 0)}
                 </p>
               </div>
               <div className="bg-zinc-800 p-4 rounded-lg shadow-lg text-center">
                 <CheckCircleIcon className="h-8 w-8 mx-auto text-blue-400 mb-2" />
-                <p className="text-zinc-400 text-sm">Completed Orders</p>
+                <p className="text-zinc-400 text-sm">tugallangan buyurtmalar</p>
                 <p className="text-2xl font-bold text-white">
                   {userStats.completed_order_count}
                 </p>
               </div>
               <div className="bg-zinc-800 p-4 rounded-lg shadow-lg text-center">
                 <XCircleIcon className="h-8 w-8 mx-auto text-red-400 mb-2" />
-                <p className="text-zinc-400 text-sm">Pending Orders</p>
+                <p className="text-zinc-400 text-sm">prechek buyurtmalar</p>
                 <p className="text-2xl font-bold text-white">
                   {userStats.non_completed_order_count}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="text-center text-zinc-400">No statistics available.</div>
+            <div className="text-center text-zinc-400">statistika yo'q.</div>
           )}
         </div>
       </div>

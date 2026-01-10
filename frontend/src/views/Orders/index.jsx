@@ -19,7 +19,7 @@ const INITIAL_STATS = {
 // --- LOCATION FILTER COMPONENT ---
 const LocationFilter = ({ locations, stats, selectedLocation, onSelect, onClear }) => (
     <div className="mb-3">
-        <div className="text-zinc-300 font-semibold mb-2">Location</div>
+        <div className="text-zinc-300 font-semibold mb-2">joylashuv</div>
         <div className="space-y-2">
             {locations.map(location => {
                 // DEBUG: Check if we can find the location in the mapped stats
@@ -42,7 +42,7 @@ const LocationFilter = ({ locations, stats, selectedLocation, onSelect, onClear 
             })}
         </div>
         {selectedLocation && (
-            <button className="mt-2 text-blue-300 hover:text-blue-100 text-sm" onClick={onClear}>Clear Location</button>
+            <button className="mt-2 text-blue-300 hover:text-blue-100 text-sm" onClick={onClear}>filterni tozalash</button>
         )}
     </div>
 );
@@ -50,7 +50,7 @@ const LocationFilter = ({ locations, stats, selectedLocation, onSelect, onClear 
 // --- USER FILTER COMPONENT ---
 const UserFilter = ({ users, stats, selectedUser, onSelect }) => (
     <div className="mb-3">
-        <div className="text-zinc-300 font-semibold mb-2">User</div>
+        <div className="text-zinc-300 font-semibold mb-2">Foydalanuvchi</div>
         <div className="space-y-2">
             {users.map(user => {
                 const pending = stats.pending_order_per_user?.find(u => String(u.id) === String(user.id));
@@ -176,13 +176,13 @@ const Orders = () => {
                                     className={`flex-1 h-8 py-1 rounded text-xs font-semibold border ${filterMode === 'location' ? 'bg-blue-600 text-white' : 'bg-zinc-700 text-zinc-200'} transition`}
                                     onClick={() => { setFilterMode('location'); setSelectedUser(""); }}
                                 >
-                                    Location
+                                    joylashuv
                                 </button>
                                 <button
                                     className={`flex-1 py-1 rounded text-xs font-semibold border ${filterMode === 'user' ? 'bg-blue-600 text-white' : 'bg-zinc-700 text-zinc-200'} transition`}
                                     onClick={() => { setFilterMode('user'); setSelectedLocation(""); }}
                                 >
-                                    User
+                                    Foydalanuvchi
                                 </button>
                             </div>
                             {filterMode === 'location' && (
@@ -213,13 +213,13 @@ const Orders = () => {
             <div className="flex-1 pb-15 min-w-0 h-screen max-h-screen overflow-y-auto scrollbar-custom">
                 <div className="p-3 w-full grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-center gap-6">
                     {loading ? (
-                        <div className="col-span-full text-center text-zinc-300">Loading...</div>
+                        <div className="col-span-full text-center text-zinc-300">yuklanmoqda...</div>
                     ) : orders.length ? (
                         [...orders]
                             .sort((a, b) => new Date(a.c_at) - new Date(b.c_at))
                             .map(order => <OrderCard key={order.id} order={order} />)
                     ) : (
-                        <div className="col-span-full text-center text-zinc-400">No orders found.</div>
+                        <div className="col-span-full text-center text-zinc-400">buyurtmalar topilmadi.</div>
                     )}
                 </div>
             </div>

@@ -1,7 +1,15 @@
 from django.contrib import admin
-from .models import Order, MenuItem, OrderItem, Reservations
+from .models import Order, MenuItem, OrderItem, Reservations, Printer, PrintJob
 from unfold.admin import ModelAdmin
-
+@admin.register(Printer)
+class PrinterAdmin(ModelAdmin):
+    list_display = ('name', 'ip_address', 'port', 'is_cashier_printer', 'is_enabled')
+    search_fields = ('name', 'ip_address')
+@admin.register(PrintJob)
+class PrintJobAdmin(ModelAdmin):
+    list_display = ('id', 'printer', 'status', 'c_at')
+    list_filter = ('status', 'c_at')
+    search_fields = ('printer__name',)
 @admin.register(Order)
 class OrderAdmin(ModelAdmin):
     list_display = ('id', 'user', 'order_status', 'subamount', 'amount', 'c_at')
@@ -11,7 +19,7 @@ class OrderAdmin(ModelAdmin):
 
 @admin.register(MenuItem)
 class MenuItemAdmin(ModelAdmin):
-    list_display = ('name', 'category', 'price', 'is_available', 'is_frequent')
+    list_display = ('name', 'category', 'price', 'is_available', 'is_frequent',"printer")
     list_filter = ('category', 'is_available', 'is_frequent')
     search_fields = ('name', 'description')
 

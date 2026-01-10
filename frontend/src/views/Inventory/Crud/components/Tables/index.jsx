@@ -93,7 +93,7 @@ const Tables = () => {
     <div className="mt-8" onClick={() => setMobileOpen((s) => !s)}>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold">Tables</h2>
+          <h2 className="text-xl font-semibold">Stollar</h2>
           <button
             className="md:hidden px-2 py-1 bg-zinc-700 hover:bg-zinc-600 text-white rounded text-sm"
             onClick={() => setMobileOpen((s) => !s)}
@@ -101,7 +101,7 @@ const Tables = () => {
             {mobileOpen ? 'Hide list' : 'Show list'}
           </button>
         </div>
-        <button onClick={openCreate} className="px-3 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm">Add Table</button>
+        <button onClick={openCreate} className="px-3 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm">Stol qo'shish</button>
       </div>
 
       {/* Desktop table */}
@@ -109,18 +109,18 @@ const Tables = () => {
         <table className="min-w-full text-sm text-left">
           <thead>
             <tr className="text-zinc-300 text-xs uppercase tracking-wider">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Capacity</th>
-              <th className="px-4 py-3">commission</th>
-              <th className="px-4 py-3">Available</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="px-4 py-3">nomi(raqami)</th>
+              <th className="px-4 py-3">joylashuvi</th>
+              <th className="px-4 py-3">sig'imi</th>
+              <th className="px-4 py-3">xizmat haqi</th>
+              <th className="px-4 py-3">mavjudligi</th>
+              <th className="px-4 py-3">harakatlar</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-zinc-300 text-center">Loading...</td>
+                <td colSpan={6} className="px-4 py-6 text-zinc-300 text-center">yuklanmoqda...</td>
               </tr>
             ) : error ? (
               <tr>
@@ -128,7 +128,7 @@ const Tables = () => {
               </tr>
             ) : tables.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-zinc-400 text-center">No tables found.</td>
+                <td colSpan={6} className="px-4 py-6 text-zinc-400 text-center">stollar topilmadi.</td>
               </tr>
             ) : (
               tables.map((t) => (
@@ -140,8 +140,8 @@ const Tables = () => {
                   <td className="px-4 py-3 text-zinc-200">{t.is_available ? "Yes" : "No"}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(t)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">Edit</button>
-                      <button onClick={() => handleDelete(t)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">Delete</button>
+                      <button onClick={() => openEdit(t)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">tahrirlash</button>
+                      <button onClick={() => handleDelete(t)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">o'chirish</button>
                     </div>
                   </td>
                 </tr>
@@ -169,14 +169,14 @@ const Tables = () => {
                   <div className="text-zinc-400 text-xs">{t.location}</div>
                 </div>
                 <div className="text-right text-xs text-zinc-400">
-                  <div>Cap: {t.capacity}</div>
+                  <div>sig'imi: {t.capacity}</div>
                   <div>{t.is_available ? 'Available' : 'Not available'}</div>
                 </div>
               </div>
               <div className="mt-3 text-zinc-300 text-sm">{String(t.commission || '').slice(0,120)}</div>
               <div className="mt-3 flex gap-2 justify-end">
-                <button onClick={() => openEdit(t)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">Edit</button>
-                <button onClick={() => handleDelete(t)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">Delete</button>
+                <button onClick={() => openEdit(t)} className="px-2 py-1 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded">tahrirlash</button>
+                <button onClick={() => handleDelete(t)} className="px-2 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded">o'chirish</button>
               </div>
             </div>
           ))
@@ -192,26 +192,26 @@ const Tables = () => {
             <h3 className="text-lg font-semibold mb-3">{editingTable ? 'Edit Table' : 'Add Table'}</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-zinc-300 text-xs mb-1">Name</label>
+                <label className="block text-zinc-300 text-xs mb-1">nomi</label>
                 <input value={form.name} onChange={(e) => handleChange('name', e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
               </div>
               <div>
-                <label className="block text-zinc-300 text-xs mb-1">Location</label>
+                <label className="block text-zinc-300 text-xs mb-1">joylashuvi</label>
                 <input value={form.location} onChange={(e) => handleChange('location', e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-zinc-300 text-xs mb-1">Capacity</label>
+                  <label className="block text-zinc-300 text-xs mb-1">sig'imi</label>
                   <input type="number" value={form.capacity} onChange={(e) => handleChange('capacity', Number(e.target.value))} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
                 </div>
                 <div>
-                  <label className="block text-zinc-300 text-xs mb-1">commission</label>
+                  <label className="block text-zinc-300 text-xs mb-1">xizmat haqi</label>
                   <input value={form.commission} onChange={(e) => handleChange('commission', e.target.value)} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
                 </div>
                 <div className="flex items-end">
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" className="w-4 h-4" checked={form.is_available} onChange={(e) => handleChange('is_available', e.target.checked)} />
-                    <span className="text-zinc-300">Available</span>
+                    <span className="text-zinc-300">mavjudligi</span>
                   </label>
                 </div>
               </div>
@@ -219,7 +219,7 @@ const Tables = () => {
               {error && <div className="text-red-400 text-sm">{error}</div>}
 
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => { setShowModal(false); setEditingTable(null); }} className="px-3 py-1 rounded bg-zinc-700 text-sm">Cancel</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingTable(null); }} className="px-3 py-1 rounded bg-zinc-700 text-sm">bekor qilish</button>
                 <button type="submit" disabled={saving} className="px-3 py-1 rounded bg-green-600 hover:bg-green-500 text-white text-sm">{saving ? 'Saving...' : (editingTable ? 'Save' : 'Create')}</button>
               </div>
             </div>

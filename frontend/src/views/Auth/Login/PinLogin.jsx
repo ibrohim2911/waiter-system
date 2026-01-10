@@ -11,7 +11,7 @@ const PinLogin = ({pinFormik}) => {
 				type="password"
 				inputMode="numeric"
 				pattern="[0-9]*"
-				placeholder="PIN"
+				placeholder="PIN-kod"
 				className="border rounded px-3 py-2 text-center tracking-widest text-2xl mb-2"
 				value={pinFormik.values.pin}
 				readOnly
@@ -32,7 +32,7 @@ const PinLogin = ({pinFormik}) => {
 				type="submit"
 				className="bg-blue-600 text-white rounded text-lg font-bold tracking-widest py-4 mt-4 w-full hover:bg-blue-700"
 			>
-				Enter
+				Kirish
 			</button>
 		</form>
 	);

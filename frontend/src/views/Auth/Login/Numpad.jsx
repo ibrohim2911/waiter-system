@@ -8,7 +8,7 @@ const Numpad = ({ onInput, onDelete, onClear }) => (
                 onClick={() => onInput(n.toString())}
             >{n}</button>
         ))}
-        <button type="button" className="bg-gray-200 rounded py-6 text-xl" onClick={onClear}>C</button>
+        <button type="button" className="bg-gray-200 rounded py-6 text-xl" onClick={onClear}>T</button>
         <button type="button" className="bg-gray-200 rounded py-6 text-xl" onClick={() => onInput('0')}>0</button>
         <button type="button" className="bg-gray-200 rounded py-6 text-xl" onClick={onDelete}>⌫</button>
     </div>

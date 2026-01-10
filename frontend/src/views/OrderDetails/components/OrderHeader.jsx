@@ -5,7 +5,7 @@ function OrderHeader({order, isEditable, onNavigate}) {
 		<>
 			<div className="flex items-center justify-between bg-zinc-800 px-2 py-1 border-b border-zinc-700">
 				<div>
-					<span className="font-bold text-sm text-zinc-100">ORDER</span>
+					<span className="font-bold text-sm text-zinc-100">BUYURTMA</span>
 					<span className="text-zinc-400 ml-1">#{order.id}</span>
 				</div>
 				<div>

@@ -97,7 +97,7 @@ const Login = () => {
 						}`}
 						onClick={() => setMode("pin")}
 					>
-						PIN
+						PIN bilan kirish
 					</button>
 					<button
 						className={`flex-1 py-2 rounded-r ${
@@ -107,7 +107,7 @@ const Login = () => {
 						}`}
 						onClick={() => setMode("login")}
 					>
-						Login
+						tel raqam bilan kirish
 					</button>
 				</div>
 				{mode === "login" ? (

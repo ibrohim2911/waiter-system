@@ -29,8 +29,7 @@ if RUNNING_AS_EXE:
 SECRET_KEY = config('SECRET_KEY', default='unsafe-development-key-change-in-production')
 
 # Auto-disable DEBUG in .exe bundle; enable in dev; can override with .env
-DEBUG = config('DEBUG', default=(not RUNNING_AS_EXE), cast=bool)
-
+DEBUG = False
 ALLOWED_HOSTS = ['*']
 
 
@@ -170,6 +169,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'frontend', 'dist'),
 ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Cache configuration: use DB-backed cache. Create table with:
 #   python manage.py createcachetable django_cache
 CACHES = {
@@ -187,32 +187,14 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'http://0.0.0.0:8000',
+    'http://192.168.100.81:8000',
+    'http://192.168.254.171:8000'
 ]
-# WhiteNoise: serve static files efficiently with far-future cache headers for
-# hashed filenames. Works well for bundled desktop deployments.
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# Max-age for static files (in seconds). Whitenoise will set long cache for
-# files with hashed names (via collectstatic + Manifest storage).
 WHITENOISE_MAX_AGE = 31536000  # 1 year
-# During development, set auto-refresh when DEBUG is True so static changes
-# are picked up without rebuilding the bundle.
 WHITENOISE_AUTOREFRESH = DEBUG
-
-
-# Use normal ESC/POS text size and disable raster rendering to keep receipts small
-PRINTER_TEXT_SIZE = config('PRINTER_TEXT_SIZE', default='normal')
-# Disable raster by default; enable only if you need fractional scaling
-PRINTER_USE_RASTER = config('PRINTER_USE_RASTER', default=False, cast=bool)
-PRINTER_SCALE = 1.0
-# Raster width (pixels) at the specified DPI for the printable area (80mm paper typical)
-PRINTER_RASTER_WIDTH = 576
-PRINTER_RASTER_DPI = 203
-
-# Restaurant display name used in receipts
-RESTAURANT_NAME = config('RESTAURANT_NAME', default='Akramjon-ustoz')
-
-# Optional shift label shown on receipts
-KASSA_SHIFT = config('KASSA_SHIFT', default='')
+import mimetypes
+mimetypes.add_type("text/css", ".css", True)
+mimetypes.add_type("application/javascript", ".js", True)
 MIGRATION_MODULES = {
 'token_blacklist': 'user.jwt_migrations',}
 from django.db.backends.signals import connection_created

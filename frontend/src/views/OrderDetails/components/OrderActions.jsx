@@ -13,21 +13,21 @@ function OrderActions({
 				onClick={onClear}
 				disabled={!isEditable}
 			>
-				Clear
+				Tozalash
 			</button>
 			<button
 				className="flex-1 py-1 bg-blue-700 text-zinc-100 rounded-lg font-bold text-sm flex items-center justify-center gap-1 hover:bg-blue-600 transition disabled:opacity-50"
 				onClick={onSave}
 				disabled={!isEditable}
 			>
-				<span role="img" aria-label="save"></span> Save
+				<span role="img" aria-label="save"></span> Saqlash
 			</button>
 			{order.order_status === "processing" && (
 				<button
 					className="flex-1 py-1 bg-yellow-600 text-zinc-100 rounded-lg font-bold text-xs flex items-center justify-center gap-1 hover:bg-yellow-500 transition"
 					onClick={() => onUpdateStatus("pending")}
 				>
-					<span role="img" aria-label="precheque"></span> prechek
+					<span role="img" aria-label="precheque"></span> Dastlabki chek
 				</button>
 			)}
 			{user && user.role !== "waiter" && (
@@ -37,7 +37,7 @@ function OrderActions({
 							className="flex-1 py-3 bg-green-700 text-zinc-100 rounded-lg font-bold text-xs flex items-center justify-center gap-1 hover:bg-green-600 transition"
 							onClick={() => onUpdateStatus("completed")}
 						>
-							<span role="img" aria-label="close"></span> yopish
+							<span role="img" aria-label="close"></span> Yopish
 						</button>
 					)}
 					{order.order_status !== "processing" && (

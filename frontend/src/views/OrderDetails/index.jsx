@@ -24,12 +24,12 @@ import MenuComponent from "./components/MenuComponent";
 import Numpad from "../../components/Numpad";
 
 const categories = [
-	{key: "frequent", label: "FREQUENTLY USED"},
-	{key: "mains", label: "MAINS"},
-	{key: "salads", label: "SALADS"},
-	{key: "drinks", label: "DRINKS"},
-	{key: "deserts", label: "DESERTS"},
-	{key: "appetizers", label: "APPETIZERS"},
+	{key: "frequent", label: "TEZ-TEZ ISHLATILADIGAN"},
+	{key: "mains", label: "ASOSIY OVQATLAR"},
+	{key: "salads", label: "SALATLAR"},
+	{key: "drinks", label: "ICHIMLIKLAR"},
+	{key: "deserts", label: "DESERTLAR"},
+	{key: "appetizers", label: "YENGIL TAOMLAR"},
 ];
 
 const initialState = {
@@ -216,7 +216,7 @@ export default function OrderEditPage() {
 				});
 
 				if (failedEdits.length > 0) {
-					alert(`Failed to save ${failedEdits.length} changes. The page will refresh, but some changes may not have been saved.`);
+					alert(`${failedEdits.length} o'zgarishlarni saqlab bo'lmadi. Sahifa yangilanadi, ammo ba'zi o'zgarishlar saqlanmasligi mumkin.`);
 				}
 			}
 
@@ -224,7 +224,7 @@ export default function OrderEditPage() {
 			dispatch({ type: 'SAVE_SUCCESS', payload: res.data });
 		} catch (err) {
 			console.error("Save failed", err);
-			alert("Failed to save order. Please check your connection and try again.");
+			alert("Buyurtmani saqlab bo'lmadi. Iltimos, internet aloqasini tekshiring va qaytadan urinib ko'ring.");
 		}
 	};
 
@@ -314,7 +314,7 @@ export default function OrderEditPage() {
 		if (originalMenuItem) {
 			dispatch({ type: 'ADD_NEW_ITEM', payload: originalMenuItem });
 		} else {
-			console.error("Could not find original menu item to copy.");
+			console.error("Nusxalash uchun asl menyu bandi topilmadi.");
 		}
 	};
 
@@ -335,7 +335,7 @@ export default function OrderEditPage() {
 		}
 
 		if (quantityToSplit >= selectedItem.quantity) {
-			alert("Split quantity must be less than the item's total quantity.");
+			alert("Bo'lish miqdori mahsulotning umumiy miqdoridan kam bo'lishi kerak.");
 			return;
 		}
 
@@ -353,8 +353,8 @@ export default function OrderEditPage() {
 
 	const selectedItem = selectedItemKey ? (displayedSavedOrderItems.find(i => `saved-${i.id}` === selectedItemKey) || groupedNewOrderItems.find(i => `${i.item_name}__${i.item_price}` === selectedItemKey)) : null;
 
-	if (!id) return <div>No order id provided.</div>;
-	if (!order) return <div>Loading order...</div>;
+	if (!id) return <div>Buyurtma raqami kiritilmagan.</div>;
+	if (!order) return <div>Buyurtma yuklanmoqda...</div>;
 
 	return (
 		<div className="min-h-screen bg-zinc-900 flex items-stretch justify-center p-0 m-0">

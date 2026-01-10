@@ -16,7 +16,7 @@ const PassLogin = ({handleSubmit, handleChange, handleBlur, values, errors, touc
 			<input
 				name="password"
 				type="password"
-				placeholder="Password"
+				placeholder="Parol"
 				className="border rounded px-3 py-2"
 				value={values.password}
 				onChange={handleChange}
@@ -33,7 +33,7 @@ const PassLogin = ({handleSubmit, handleChange, handleBlur, values, errors, touc
 				{isSubmitting && (
 					<div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
 				)}
-				{isSubmitting ? "Kirish..." : "Login"}
+				{isSubmitting ? "Kirilmoqda..." : "Kirish"}
 			</button>
 		</form>
 	);

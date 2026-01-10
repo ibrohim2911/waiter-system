@@ -23,7 +23,7 @@ const NewItemEditActions = ({ item, onQuantityChange, onDelete, onClose, onNumpa
       <div className="flex items-center justify-between gap-2">
         <div className="flex-grow min-w-0">
           <p className="text-sm font-semibold text-white truncate">{item.item_name}</p>
-          <p className="text-xs text-zinc-400">Quantity: {item.quantity}</p>
+          <p className="text-xs text-zinc-400">Miqdori: {item.quantity}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <div 
@@ -36,17 +36,17 @@ const NewItemEditActions = ({ item, onQuantityChange, onDelete, onClose, onNumpa
           >
             {item.quantity}
           </div>
-          <button onClick={() => onQuantityChange(-1)} className={buttonClass} aria-label="Decrease quantity">
+          <button onClick={() => onQuantityChange(-1)} className={buttonClass} aria-label="Miqdorni kamaytirish">
             <MinusIcon className="h-5 w-5" />
           </button>
-          <button onClick={() => onQuantityChange(1)} className={buttonClass} aria-label="Increase quantity">
+          <button onClick={() => onQuantityChange(1)} className={buttonClass} aria-label="Miqdorni oshirish">
             <PlusIcon className="h-5 w-5" />
           </button>
-          <button onClick={onDelete} className="bg-red-800 hover:bg-red-700 text-white font-bold p-2 rounded-lg transition-colors duration-200" aria-label="Delete item">
+          <button onClick={onDelete} className="bg-red-800 hover:bg-red-700 text-white font-bold p-2 rounded-lg transition-colors duration-200" aria-label="O'chirish">
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
-        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors" aria-label="Close edit actions">
+        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors" aria-label="Tahrirlashni yopish">
           <XMarkIcon className="h-6 w-6" />
         </button>
       </div>

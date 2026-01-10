@@ -127,7 +127,7 @@ const OrderCard = ({order}) => {
 							})}
 						</ul>
 					) : (
-						<p className="text-xs text-zinc-400 italic">No items yet</p>
+						<p className="text-xs text-zinc-400 italic">Buyurtmalar yo'q</p>
 					)}
 				</div>
 			</div>
@@ -135,7 +135,7 @@ const OrderCard = ({order}) => {
 			{/* Amount */}
 			<div className="mb-0 bg-zinc-700 rounded-md p-1">
 				<div className="flex justify-between font-bold text-sm  pt-1 text-[1.3em]">
-					<span className={order.order_status === 'pending' ? 'text-red-500' : 'text-zinc-100'}>Total:</span>
+					<span className={order.order_status === 'pending' ? 'text-red-500' : 'text-zinc-100'}>Jami:</span>
 					<span className={order.order_status === 'pending' ? 'text-red-500' : 'text-green-400'}>{order.amount}<small> so'm</small></span>
 				</div>
 			</div>

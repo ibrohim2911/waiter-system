@@ -36,7 +36,7 @@ const TableCard = ({ table, onSelect }) => {
 				</div>
 				{table.commission && (
 					<p className="text-zinc-500 text-xs mt-1">
-						Komissiya: {table.commission}%
+						xizmat haqi: {table.commission}%
 					</p>
 				)}
 			</div>

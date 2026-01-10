@@ -8,9 +8,9 @@ function timeSince(date) {
 	const now = new Date();
 	const updated = new Date(date);
 	const seconds = Math.floor((now - updated) / 1000);
-	if (seconds < 60) return `${seconds} sekund `;
+	if (seconds < 60) return `${seconds} soniya`;
 	const minutes = Math.floor(seconds / 60);
-	if (minutes < 60) return `${minutes} minut `;
+	if (minutes < 60) return `${minutes} daqiqa`;
 	const hours = Math.floor(minutes / 60);
 	if (hours < 24) return `${hours} soat`;
 	const days = Math.floor(hours / 24);
@@ -26,7 +26,7 @@ function OrderItemsList({
 	if (savedItems.length === 0 && newItems.length === 0) {
 		return (
 			<div className="text-zinc-500 text-center py-4">
-				No items in order.
+				Buyurtmada mahsulotlar yo'q.
 			</div>
 		);
 	}
@@ -50,7 +50,7 @@ function OrderItemsList({
 									{item.item_name}
 								</span>
 								{item.deleted && (
-									<span className="ml-1 text-xs text-red-400 font-bold">(deleted)</span>
+									<span className="ml-1 text-xs text-red-400 font-bold">(o'chirildi)</span>
 								)}
 							</div>
 							<div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ function OrderItemsList({
 			{newItems.length > 0 && (
 				<>
 					<div className="text-xs text-blue-400 mb-1">
-						New Items (not saved yet)
+						Yangi mahsulotlar (saqlanmagan)
 					</div>
 					<ul className="space-y-2">
 						{newItems.map(item => (

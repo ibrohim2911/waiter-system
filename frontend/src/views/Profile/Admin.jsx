@@ -85,7 +85,7 @@ const Admin = () => {
   };
 
   if (loading || statsLoading) {
-    return <div className="text-center text-zinc-300 p-10">Loading profile...</div>;
+    return <div className="text-center text-zinc-300 p-10">profil yuklanmoqda...</div>;
   }
 
   if (error || !user) {
@@ -103,16 +103,16 @@ const Admin = () => {
           </div>
           <div className="mt-4 border-t border-zinc-700 pt-4 space-y-2">
             <div className="flex justify-between">
-              <span className="font-semibold text-zinc-400">Phone:</span>
+              <span className="font-semibold text-zinc-400">tel raqami:</span>
               <span className="text-zinc-200 text-sm">{user.phone_number || 'Not provided'}</span>
             </div>
           </div>
           <form onSubmit={handlePasswordChange} className="mt-4 border-t border-zinc-700 pt-4 space-y-3">
-            <h3 className="font-semibold text-zinc-300">Reset Password</h3>
+            <h3 className="font-semibold text-zinc-300">parolni almashtirish</h3>
             <input
               type="password"
               name="old_password"
-              placeholder="Old Password"
+              placeholder="eski parol"
               value={passwords.old_password}
               onChange={handlePasswordInputChange}
               className="w-full bg-zinc-700 text-white p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -120,7 +120,7 @@ const Admin = () => {
             <input
               type="password"
               name="new_password"
-              placeholder="New Password"
+              placeholder="yangi parol"
               value={passwords.new_password}
               onChange={handlePasswordInputChange}
               className="w-full bg-zinc-700 text-white p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -128,7 +128,7 @@ const Admin = () => {
             <input
               type="password"
               name="confirm_password"
-              placeholder="Confirm New Password"
+              placeholder="yangi parolni tasdiqlang"
               value={passwords.confirm_password}
               onChange={handlePasswordInputChange}
               className="w-full bg-zinc-700 text-white p-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -136,7 +136,7 @@ const Admin = () => {
             {passwordError && <p className="text-red-400 text-xs">{passwordError}</p>}
             {passwordSuccess && <p className="text-green-400 text-xs">{passwordSuccess}</p>}
             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">
-              Update Password
+              parolni yangilash
             </button>
           </form>
           <div className="mt-4 border-t border-zinc-700 pt-4">
@@ -145,14 +145,14 @@ const Admin = () => {
               className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
             >
               <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-              <span>Logout</span>
+              <span>chiqish</span>
             </button>
           </div>
         </div>
 
         <div className="lg:col-span-3">
           <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
-            <h2 className="text-2xl font-bold text-zinc-200 flex items-center gap-2"><ChartBarIcon className="h-6 w-6" /> Statistics </h2>
+            <h2 className="text-2xl font-bold text-zinc-200 flex items-center gap-2"><ChartBarIcon className="h-6 w-6" /> statistikalar </h2>
             <div className="flex flex-wrap items-center gap-4">
               <DateRangePicker onChange={setStatsPeriod} />
             </div>
@@ -161,32 +161,32 @@ const Admin = () => {
           <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-zinc-800 p-4 rounded-lg shadow-lg text-center">
               <CurrencyDollarIcon className="h-8 w-8 mx-auto text-green-400 mb-2" />
-              <p className="text-zinc-400 text-sm">Total Spent</p>
-              <p className="text-2xl font-bold text-white">${(adminReport?.total_spent / 100 || 0).toFixed(2)}</p>
+              <p className="text-zinc-400 text-sm">umumiy summa</p>
+              <p className="text-2xl font-bold text-white">${(adminReport?.total_spent / 100 || 0)}</p>
             </div>
 
             <div className="bg-zinc-800 p-4 rounded-lg shadow-lg text-center">
               <CurrencyDollarIcon className="h-8 w-8 mx-auto text-yellow-400 mb-2" />
-              <p className="text-zinc-400 text-sm">Total Profit</p>
-              <p className="text-2xl font-bold text-white">${(adminReport?.total_profit / 100 || 0).toFixed(2)}</p>
+              <p className="text-zinc-400 text-sm">umumiy foyda</p>
+              <p className="text-2xl font-bold text-white">${(adminReport?.total_profit / 100 || 0)}</p>
             </div>
 
             <div className="bg-zinc-800 p-4 rounded-lg shadow-lg text-center">
               <ClipboardDocumentListIcon className="h-8 w-8 mx-auto text-blue-400 mb-2" />
-              <p className="text-zinc-400 text-sm">Total Orders</p>
+              <p className="text-zinc-400 text-sm">umumiy buyurtmalar soni</p>
               <p className="text-2xl font-bold text-white">{adminReport?.order_count || 0}</p>
             </div>
           </div>
           
           <div className="bg-zinc-800 p-4 rounded-lg shadow-lg mb-6">
-            <h3 className="text-lg font-semibold text-zinc-200 mb-3">User Performance</h3>
+            <h3 className="text-lg font-semibold text-zinc-200 mb-3">Foydalanuvchilar ish ko'lami</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left text-zinc-300">
                 <thead className="text-xs text-zinc-400 uppercase bg-zinc-700">
                   <tr>
-                    <th scope="col" className="px-4 py-2">User</th>
-                    <th scope="col" className="px-4 py-2 text-right">Order Count</th>
-                    <th scope="col" className="px-4 py-2 text-right">Total Spent</th>
+                    <th scope="col" className="px-4 py-2">Foydalanuvchi</th>
+                    <th scope="col" className="px-4 py-2 text-right">buyurtma soni</th>
+                    <th scope="col" className="px-4 py-2 text-right">umumiy summa</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -194,7 +194,7 @@ const Admin = () => {
                     <tr key={u.waiter_id || 'unassigned'} className="border-b border-zinc-700 hover:bg-zinc-700/50">
                       <td className="px-4 py-2 font-medium">{u.name || 'Unassigned'}</td>
                       <td className="px-4 py-2 text-right">{u.order_count}</td>
-                      <td className="px-4 py-2 text-right font-semibold">${(u.total_spent / 100).toFixed(2)}</td>
+                      <td className="px-4 py-2 text-right font-semibold">${(u.total_spent / 100)}</td>
                     </tr>
                   ))}
                 </tbody>

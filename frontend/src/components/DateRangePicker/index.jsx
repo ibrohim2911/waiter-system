@@ -123,7 +123,7 @@ const DateRangePicker = ({ onChange }) => {
           className="ml-2 px-3 py-[6px] text-sm md:text-base text-zinc-200 bg-zinc-700 rounded-md hover:bg-zinc-600"
           aria-label="Set to today"
         >
-          Today
+          Bugun
         </button>
       </div>
 
@@ -137,7 +137,7 @@ const DateRangePicker = ({ onChange }) => {
               className="bg-zinc-700 text-white p-3 rounded-md w-30 text-center appearance-none"
               aria-label="Start date"
             />
-            <span className="text-zinc-400 px-1">to</span>
+            <span className="text-zinc-400 px-1">dan</span>
             <input
               type="date"
               value={toInputDate(endDate)}
@@ -158,7 +158,7 @@ const DateRangePicker = ({ onChange }) => {
               endDate={endDate}
               className="bg-zinc-700 text-white p-2 rounded-md w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="text-zinc-400 px-1">to</span>
+            <span className="text-zinc-400 px-1">dan</span>
             <DatePicker
               selected={endDate}
               onChange={handleEndDateChange}

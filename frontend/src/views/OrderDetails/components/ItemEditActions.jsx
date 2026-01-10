@@ -9,26 +9,26 @@ const ItemEditActions = ({ item, onCopy, onCut, onDelete, onRestore, onClose }) 
       <div className="flex items-center justify-between gap-2">
         <div className="flex-grow min-w-0">
           <p className={`text-sm font-semibold ${item.deleted ? 'text-zinc-400 line-through' : 'text-white'} truncate`}>{item.item_name}</p>
-          <p className="text-xs text-zinc-400">Quantity: {item.quantity}</p>
+          <p className="text-xs text-zinc-400">Miqdori: {item.quantity}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={onCopy} className={buttonClass} aria-label="Copy item">
+          <button onClick={onCopy} className={buttonClass} aria-label="Nusxalash">
             <DocumentDuplicateIcon className="h-5 w-5" />
           </button>
-          <button onClick={onCut} className={buttonClass} aria-label="Cut/Split item">
+          <button onClick={onCut} className={buttonClass} aria-label="Kesish/Bo'lish">
             <ScissorsIcon className="h-5 w-5" />
           </button>
           {item.deleted ? (
-            <button onClick={onRestore} className="bg-green-700 hover:bg-green-600 text-white font-bold p-2 rounded-lg transition-colors duration-200" aria-label="Restore item">
+            <button onClick={onRestore} className="bg-green-700 hover:bg-green-600 text-white font-bold p-2 rounded-lg transition-colors duration-200" aria-label="Qayta tiklash">
               <ArrowPathIcon className="h-5 w-5" />
             </button>
           ) : (
-            <button onClick={onDelete} className="bg-red-800 hover:bg-red-700 text-white font-bold p-2 rounded-lg transition-colors duration-200" aria-label="Delete item">
+            <button onClick={onDelete} className="bg-red-800 hover:bg-red-700 text-white font-bold p-2 rounded-lg transition-colors duration-200" aria-label="O'chirish">
               <TrashIcon className="h-5 w-5" />
             </button>
           )}
         </div>
-        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors" aria-label="Close edit actions">
+        <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors" aria-label="Tahrirlashni yopish">
           <XMarkIcon className="h-6 w-6" />
         </button>
       </div>
