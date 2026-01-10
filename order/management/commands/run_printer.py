@@ -1,55 +1,60 @@
 import time
+import socket
+import io
+import base64
+from PIL import Image
 from django.core.management.base import BaseCommand
-from order.models import PrintJob, Printer 
+from order.models import PrintJob
 from escpos.printer import Network 
 
 class Command(BaseCommand):
-    help = 'Process print jobs queue'
+    help = 'Process print jobs as high-quality images'
 
     def handle(self, *args, **options):
-        self.stdout.write("Started Print Worker...")
+        self.stdout.write(self.style.SUCCESS("Started Image-Based Print Worker..."))
 
         while True:
-            # Get pending jobs (FIFO)
             pending_jobs = PrintJob.objects.filter(status='pending').order_by('c_at')
 
             for job in pending_jobs:
-                # Refresh from DB to ensure it wasn't cancelled while we were waiting
                 job.refresh_from_db()
-                if job.status == 'cancelled':
+                if job.status != 'pending':
                     continue
 
+                p = None
                 try:
-                    self.stdout.write(f"Printing Job {job.id} on {job.printer.ip_address}...")
+                    # 1. Physical Check
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(3)
+                    if sock.connect_ex((job.printer.ip_address, int(job.printer.port or 9100))) != 0:
+                        raise ConnectionError("Printer Unreachable")
+                    sock.close()
+
+                    # 2. Decode Base64 Payload to Image
+                    image_bytes = base64.b64decode(job.payload)
+                    img = Image.open(io.BytesIO(image_bytes))
+
+                    # 3. Print
+                    p = Network(job.printer.ip_address, port=int(job.printer.port or 9100))
+                    self.stdout.write(f"Printing Image Job {job.id}...")
                     
-                    # --- CONNECTION ---
-                    # Timeout is low (5s) so we don't block the loop for too long
-                    p = Network(job.printer.ip_address, port=job.printer.port or 9100)
-                    
-                    # --- PRINTING ---
-                    # Using CP866 or similar for Cyrillic/Uzbek characters if needed
-                    # p.codepage = 'cp866' 
-                    
-                    p.text(job.payload.encode('utf-8').decode('utf-8'))
-                    p.cut(mode='FULL', feed=True)
-                    
-                    # --- SUCCESS ---
+                    # Use bitImageRaster for better compatibility with thermal printers
+                    p.image(img, impl="bitImageRaster")
+                    p.cut()
+
+                    # 4. Success Sync
+                    time.sleep(1.5)
                     job.status = 'printed'
                     job.save()
                     self.stdout.write(self.style.SUCCESS(f"Job {job.id} Success"))
 
                 except Exception as e:
-                    # --- FAILURE ---
-                    # We do NOT mark as 'failed' permanently, we leave as 'pending'
-                    # so it retries when printer comes back online.
-                    self.stdout.write(self.style.ERROR(f"Printer Offline: {e}"))
-                    
-                    # Optional: Store error message
-                    job.error_message = str(e)
-                    job.save()
-                    
-                    # Break the inner loop to wait before retrying (prevents CPU spam)
+                    self.stdout.write(self.style.ERROR(f"Print Error: {e}"))
                     break 
 
-            # Sleep 5 seconds before checking for new jobs again
-            time.sleep(5)
+                finally:
+                    if p:
+                        try: p.device.close()
+                        except: pass
+
+            time.sleep(2)

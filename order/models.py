@@ -285,51 +285,82 @@ def _increase_inventory(order_item):
     except Exception as e:
         # Log potential errors during the update or delete process
         print(f"Error during inventory restore/usage delete for OrderItem {order_item.pk}: {e}")
-@receiver(post_save, sender=Order) # Replace 'yourapp' with your actual app name
+@receiver(post_save, sender=Order)
 def order_post_save_trigger_printer(sender, instance, created, **kwargs):
-    """Prints full receipt to Cashier Printer when order is completed."""
-    if not created:
-        update_fields = kwargs.get('update_fields')
-        # Check if order_status changed to completed
-        if instance.order_status == 'completed':
-            try:
-                from .utils import cashier_receipt
-                
-                # 1. Generate Content
-                content = cashier_receipt(instance.id)
-                
-                # 2. Find Cashier Printer
-                printer = Printer.objects.filter(is_cashier_printer=True, is_enabled=True).first()
-                
-                if printer:
-                    # 3. Create Job
-                    PrintJob.objects.create(printer=printer, payload=content, status='pending')
-                else:
-                    logger.warning("No Cashier Printer found!")
+    """Prints full receipt when order is set to completed or pending."""
+    
+    # Define which statuses should trigger a print
+    TRIGGER_STATUSES = ['completed', 'pending']
+    
+    if instance.order_status in TRIGGER_STATUSES:
+        try:
+            from .utils import cashier_receipt
+            
+            # 1. Check if a job for this status already exists to avoid double-printing
+            # Optional: Remove this check if you want it to print every time they hit save
+            already_exists = PrintJob.objects.filter(
+                payload__icontains=f"ID: {instance.id}", # A way to identify the order in the image string
+                status='pending'
+            ).exists()
+            
+            if already_exists:
+                return
 
-            except Exception as e:
-                logger.exception(f"Error creating cashier receipt for Order {instance.pk}: {e}")
+            # 2. Find Cashier Printer
+            printer = Printer.objects.filter(is_cashier_printer=True, is_enabled=True).first()
+            
+            if not printer:
+                print(f"DEBUG: No enabled Cashier Printer found for Order {instance.id}")
+                return
+
+            # 3. Generate Image Content (Base64 string from your new utils.py)
+            content = cashier_receipt(instance.id)
+            
+            # 4. Create Job
+            PrintJob.objects.create(
+                printer=printer, 
+                payload=content, 
+                status='pending'
+            )
+            print(f"DEBUG: PrintJob created successfully for Order {instance.id}")
+
+        except Exception as e:
+            # Use print() here temporarily to see errors in your terminal if logger isn't configured
+            print(f"ERROR creating cashier receipt for Order {instance.pk}: {str(e)}")
+@receiver(pre_save, sender=OrderItem)
+def store_original_quantity(sender, instance, **kwargs):
+    """Before saving, store the original quantity if the item already exists."""
+    if not instance._state.adding:
+        try:
+            instance._original_quantity = OrderItem.objects.get(pk=instance.pk).quantity
+        except OrderItem.DoesNotExist:
+            instance._original_quantity = None
 
 @receiver(post_save, sender=OrderItem)
 def orderitem_post_save_trigger_printer(sender, instance, created, **kwargs):
-    """Prints kitchen ticket to the specific printer defined in MenuItem."""
-    if created:
-        try:
-            from .utils import orderitem_receipt
-            
-            # 1. Get the printer specific to this menu item (e.g., Kitchen vs Bar)
-            # Assuming MenuItem has a 'printer' ForeignKey field
-            target_printer = instance.menu_item.printer 
+    """
+    - Prints kitchen ticket for new items.
+    - Prints a reduction ticket if quantity is decreased.
+    """
+    try:
+        from .utils import orderitem_receipt, reduced_orderitem_receipt
+        target_printer = instance.menu_item.printer 
+        if not target_printer or not target_printer.is_enabled:
+            return
 
-            if target_printer and target_printer.is_enabled:
-                # 2. Generate Content
-                content = orderitem_receipt(instance)
-                
-                # 3. Create Job
-                PrintJob.objects.create(printer=target_printer, payload=content, status='pending')
+        if created:
+            content = orderitem_receipt([instance])
+            PrintJob.objects.create(printer=target_printer, payload=content, status='pending')
         
-        except Exception as e:
-            logger.exception(f"Error creating item receipt: {e}")
+        else: # If updated
+            original_quantity = getattr(instance, '_original_quantity', None)
+            if original_quantity is not None and instance.quantity < original_quantity:
+                reduced_by = original_quantity - instance.quantity
+                content = reduced_orderitem_receipt(instance, reduced_by)
+                PrintJob.objects.create(printer=target_printer, payload=content, status='pending')
+
+    except Exception as e:
+        logger.exception(f"Error in orderitem_post_save_trigger_printer: {e}")
 
 @receiver(post_delete, sender=OrderItem)
 def orderitem_post_delete_trigger_printer(sender, instance, **kwargs):
@@ -340,8 +371,9 @@ def orderitem_post_delete_trigger_printer(sender, instance, **kwargs):
         target_printer = instance.menu_item.printer 
 
         if target_printer and target_printer.is_enabled:
-            content = cancelled_orderitem_receipt(instance)
+            content = cancelled_orderitem_receipt([instance])
             PrintJob.objects.create(printer=target_printer, payload=content, status='pending')
 
     except Exception as e:
         logger.exception(f"Error creating cancel receipt: {e}")
+

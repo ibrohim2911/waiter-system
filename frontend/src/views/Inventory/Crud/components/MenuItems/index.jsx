@@ -227,7 +227,7 @@ const MenuItems = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-zinc-300 text-xs mb-1">narxi</label>
-                  <input type="number" value={form.price} onChange={(e) => handleChange('price', Number(e.target.value))} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
+                  <input type="number" value="" onChange={(e) => handleChange('price', Number(e.target.value))} className="w-full px-3 py-2 bg-zinc-800 rounded border border-zinc-700 text-white text-sm" />
                 </div>
                 <div className="flex items-end">
                   <label className="flex items-center gap-2 text-sm">

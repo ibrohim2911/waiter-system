@@ -102,7 +102,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         """ Filter order items based on the user who owns the parent order. """
         user = self.request.user
         try:
-            if user.is_staff:
+            if user.role == "admin" or user.role == "accountant":
                 return OrderItem.objects.all()
             return OrderItem.objects.filter(order__user=user)
         except PermissionDenied:
@@ -112,48 +112,21 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         is_many = isinstance(request.data, list)
         serializer = self.get_serializer(data=request.data, many=is_many)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        created_items = serializer.instance if is_many else [serializer.instance]
-        try:
-            create_kitchen_ticket_job(created_items)
-        except Exception as e:
-            logger.exception(f"Failed to create kitchen ticket job: {e}")
-
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
+        
     def perform_create(self, serializer):
         serializer.save()
 
     def update(self, request, *args, **kwargs):
-        """Handle item update (quantity reduction). Print removal receipt if quantity decreased."""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        
-        # Store original quantity before update
-        original_quantity = instance.quantity
-        
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        
-        # Check if quantity was reduced
-        new_quantity = instance.quantity
-        if new_quantity < original_quantity:
-            reduced_qty = original_quantity - new_quantity
-            order = instance.order
-            removed_items = [{
-                'name': instance.menu_item.name,
-                'removed_qty': str(reduced_qty),
-                'price': str(instance.menu_item.price)
-            }]
-            try:
-                create_item_removal_receipt_job(order, removed_items)
-            except Exception as e:
-                logger.exception(f"Failed to create removal receipt job for OrderItem {instance.pk}: {e}")
-        
         return Response(serializer.data)
 
 @swagger_auto_schema(tags=['Reservations'])

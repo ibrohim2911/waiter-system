@@ -29,7 +29,7 @@ if RUNNING_AS_EXE:
 SECRET_KEY = config('SECRET_KEY', default='unsafe-development-key-change-in-production')
 
 # Auto-disable DEBUG in .exe bundle; enable in dev; can override with .env
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 
